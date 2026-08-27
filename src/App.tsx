@@ -1,39 +1,37 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
-import { AppProvider } from '@/context/AppContext'
-import { AnalyticsPage } from '@/pages/AnalyticsPage'
-import { ContactsPage } from '@/pages/ContactsPage'
-import { DashboardPage } from '@/pages/DashboardPage'
-import { DocumentsPage } from '@/pages/DocumentsPage'
-import { HistoryPage } from '@/pages/HistoryPage'
-import { LogoutPage } from '@/pages/LogoutPage'
-import { MessagesPage } from '@/pages/MessagesPage'
-import { ReportsPage } from '@/pages/ReportsPage'
-import { SettingsPage } from '@/pages/SettingsPage'
-import { TransactionsPage } from '@/pages/TransactionsPage'
-import { WalletPage } from '@/pages/WalletPage'
+import { dashboardFor } from '@/config/navigation'
+import { AppProvider, useApp } from '@/context/AppContext'
+import { LoginPage } from '@/pages/LoginPage'
+import { AdminDashboardPage, MemberDashboardPage } from '@/pages/SocialDashboardPage'
+import { ApprovalsPage, AuditLogsPage, ContributionPlansPage, ContributionsPage, LoansPage, MemberContributionsPage, MemberLoansPage, MemberPlanPage, MemberRepaymentsPage, MembersPage, NotificationsPage, ProfilePage, RepaymentsPage, ReportsPage } from '@/pages/SocialFundPages'
+import type { UserRole } from '@/types/app'
 
-export default function App() {
-  return (
-    <AppProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="reports" element={<ReportsPage />} />
-            <Route path="wallet" element={<WalletPage />} />
-            <Route path="transactions" element={<TransactionsPage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="messages" element={<MessagesPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-            <Route path="documents" element={<DocumentsPage />} />
-            <Route path="history" element={<HistoryPage />} />
-            <Route path="contacts" element={<ContactsPage />} />
-            <Route path="logout" element={<LogoutPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </AppProvider>
-  )
+function RoleGuard({ role }: { role: UserRole }) {
+  const { currentUser } = useApp()
+  if (!currentUser) return <Navigate to="/login" replace />
+  if (currentUser.role !== role) return <Navigate to={dashboardFor(currentUser.role)} replace />
+  return <Outlet />
 }
+function HomeRedirect() { const { currentUser } = useApp(); return <Navigate to={currentUser ? dashboardFor(currentUser.role) : '/login'} replace /> }
+function AppRoutes() { return <Routes>
+  <Route path="/login" element={<LoginPage />} />
+  <Route element={<AppLayout />}>
+    <Route element={<RoleGuard role="ADMIN" />}>
+      <Route path="/admin/dashboard" element={<AdminDashboardPage />} /><Route path="/admin/members" element={<MembersPage />} />
+      <Route path="/admin/contribution-plans" element={<ContributionPlansPage />} /><Route path="/admin/contributions" element={<ContributionsPage />} />
+      <Route path="/admin/loans" element={<LoansPage />} /><Route path="/admin/repayments" element={<RepaymentsPage />} />
+      <Route path="/admin/approvals" element={<ApprovalsPage />} /><Route path="/admin/reports" element={<ReportsPage />} />
+      <Route path="/admin/notifications" element={<NotificationsPage />} /><Route path="/admin/audit-logs" element={<AuditLogsPage />} />
+      <Route path="/admin/settings" element={<ProfilePage admin />} />
+    </Route>
+    <Route element={<RoleGuard role="MEMBER" />}>
+      <Route path="/member/dashboard" element={<MemberDashboardPage />} /><Route path="/member/contributions" element={<MemberContributionsPage />} />
+      <Route path="/member/contribution-plan" element={<MemberPlanPage />} /><Route path="/member/loans" element={<MemberLoansPage />} />
+      <Route path="/member/repayments" element={<MemberRepaymentsPage />} /><Route path="/member/notifications" element={<NotificationsPage />} />
+      <Route path="/member/profile" element={<ProfilePage />} />
+    </Route>
+  </Route>
+  <Route path="*" element={<HomeRedirect />} />
+</Routes> }
+export default function App() { return <AppProvider><BrowserRouter><AppRoutes /></BrowserRouter></AppProvider> }
