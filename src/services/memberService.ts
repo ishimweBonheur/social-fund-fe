@@ -41,7 +41,7 @@ const createPayload = (input: MemberInput) => ({
 })
 
 export async function listMembers(query: MemberQuery = {}): Promise<MemberList> {
-  const limit = query.pageSize ?? 20
+  const limit = query.pageSize ?? 100
   const page = query.page ?? 1
   const { data: response } = await apiClient.get<{ data: MemberDto[]; limit: number; offset: number }>('/admin/users/', { params: { search: query.search || undefined, status: query.status, role: 'MEMBER', limit, offset: (page - 1) * limit } })
   return { members: response.data.map(mapMember), total: response.data.length, page, pageSize: response.limit || limit }

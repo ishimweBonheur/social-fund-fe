@@ -3,17 +3,19 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useApp } from '@/context/AppContext'
 import { retryNotification } from '@/services/notificationService'
+import SupportRequestDialog from '@/components/shared/SupportRequestDialog'
 
 export default function NotificationsContent() {
-  const { notifications, markNotificationRead, markAllNotificationsRead } = useApp()
+  const { currentUser, notifications, markNotificationRead, markAllNotificationsRead, refreshNotifications } = useApp()
   const [selected, setSelected] = useState<(typeof notifications)[number]>()
+  const [supportOpen, setSupportOpen] = useState(false)
   const markAll = () => { markAllNotificationsRead(); toast.success('All notifications marked as read.') }
   return (
     <div>
       <PageHeader
         title="Notifications"
         description="Fund activity, reminders, and account updates"
-        action={notifications.length ? <Button variant="outline" className="rounded-full" onClick={markAll}>Mark all read</Button> : undefined}
+        action={currentUser?.role === 'MEMBER' ? <Button className="rounded-full" onClick={() => setSupportOpen(true)}>Request Support</Button> : notifications.length ? <Button variant="outline" className="rounded-full" onClick={markAll}>Mark all read</Button> : undefined}
       />
       <Card>
         <CardContent className="divide-y p-0">
@@ -29,6 +31,7 @@ export default function NotificationsContent() {
         </CardContent>
       </Card>
       <DetailDialog open={Boolean(selected)} onOpenChange={(open) => { if (!open) setSelected(undefined) }} title={selected?.title ?? 'Notification'} description="Notification details" items={selected ? [{ label: 'Message', value: selected.message }, { label: 'Time', value: selected.time }, { label: 'Status', value: selected.deliveryStatus ?? 'READ', status: true }] : []} />
+      {supportOpen && <SupportRequestDialog open={supportOpen} onOpenChange={setSupportOpen} onSent={refreshNotifications} />}
     </div>
   )
 }

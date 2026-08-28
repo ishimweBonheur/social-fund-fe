@@ -14,6 +14,7 @@ interface AppContextValue {
   logout: () => void
   markNotificationRead: (id: string) => void
   markAllNotificationsRead: () => void
+	refreshNotifications: () => void
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined)
@@ -52,13 +53,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const markNotificationRead = useCallback((id: string) => { setNotifications((items) => items.map((item) => item.id === id ? { ...item, read: true } : item)); void readNotification(id).catch(() => undefined) }, [])
   const markAllNotificationsRead = useCallback(() => { setNotifications((items) => items.map((item) => item.audience === 'ALL' || item.audience === currentUser?.role ? { ...item, read: true } : item)); void readAllNotifications().catch(() => undefined) }, [currentUser?.role])
 
+  const refreshNotifications = useCallback(() => {
+    if (!currentUser) return
+    void listNotifications().then(setNotifications).catch(() => setNotifications([]))
+  }, [currentUser])
   useEffect(() => {
-    if (!currentUser || currentUser.role !== 'ADMIN') return
+    if (!currentUser) return
     let active = true
     void listNotifications().then((items) => { if (active) setNotifications(items) }).catch(() => { if (active) setNotifications([]) })
     return () => { active = false }
   }, [currentUser])
-  const value = useMemo(() => ({ currentUser, isAuthenticated: Boolean(currentUser), isAuthLoading, notifications, unreadCount, loginWithGoogle, logout, markNotificationRead, markAllNotificationsRead }), [currentUser, isAuthLoading, notifications, unreadCount, loginWithGoogle, logout, markNotificationRead, markAllNotificationsRead])
+  const value = useMemo(() => ({ currentUser, isAuthenticated: Boolean(currentUser), isAuthLoading, notifications, unreadCount, loginWithGoogle, logout, markNotificationRead, markAllNotificationsRead, refreshNotifications }), [currentUser, isAuthLoading, notifications, unreadCount, loginWithGoogle, logout, markNotificationRead, markAllNotificationsRead, refreshNotifications])
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }
 
