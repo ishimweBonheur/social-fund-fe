@@ -1,21 +1,101 @@
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Search, X } from 'lucide-react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FinmLogo } from '@/components/shared/FinmLogo'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { dashboardFor } from '@/config/navigation'
+import { Input } from '@/components/ui/input'
 import { useApp } from '@/context/AppContext'
-import type { UserRole } from '@/types/app'
 import { NotificationsPanel } from './NotificationsPanel'
 
 export function Header() {
-  const { currentUser, switchRole, logout } = useApp(); const navigate = useNavigate()
+  const { currentUser, logout } = useApp()
+  const navigate = useNavigate()
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
   if (!currentUser) return null
-  const chooseRole = (role: UserRole) => { switchRole(role); navigate(dashboardFor(role)) }
-  return <header className="flex h-10 items-center justify-between rounded-full border border-border bg-card px-3 shadow-soft">
-    <FinmLogo className="md:hidden" />
-    <div className="hidden md:block"><p className="text-xs font-semibold text-foreground">Social Fund Management</p><p className="text-[10px] text-muted-foreground">{currentUser.role === 'ADMIN' ? 'Administration portal' : 'Member portal'}</p></div>
-    <div className="flex items-center gap-1"><NotificationsPanel /><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 gap-2 rounded-full px-1.5"><Avatar className="h-7 w-7"><AvatarFallback className="bg-accent text-[10px] text-primary">BI</AvatarFallback></Avatar><span className="hidden text-xs sm:inline">{currentUser.fullName}</span><ChevronDown className="h-3 w-3" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => chooseRole('ADMIN')}>Use Admin role</DropdownMenuItem><DropdownMenuItem onClick={() => chooseRole('MEMBER')}>Use Member role</DropdownMenuItem><DropdownMenuItem onClick={() => { logout(); navigate('/login') }}>Sign out</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>
-  </header>
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    // Handle search logic here
+    console.log('Searching for:', searchQuery)
+    setSearchQuery('')
+    setIsSearchOpen(false)
+  }
+
+  return (
+    <header className="relative flex h-12 w-full min-w-0 items-center justify-end gap-2 rounded-full border border-border/50 bg-card/90 px-2 shadow-sm backdrop-blur-sm transition-all sm:px-3 md:px-4">
+      <div className="hidden md:flex md:flex-1 md:items-center md:justify-end">
+    
+        <form onSubmit={handleSearch} className="relative w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search members, contributions, loans..."
+            className="h-8 rounded-full border-border/50 bg-muted/50 pl-9 pr-4 text-sm transition-all placeholder:text-muted-foreground/60 focus:bg-background focus:border-primary/50"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </form>
+      </div>
+      
+      <div className="flex items-center gap-1 md:gap-2">
+        {/* Search toggle - mobile */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-full md:hidden"
+          onClick={() => setIsSearchOpen(!isSearchOpen)}
+        >
+          {isSearchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+        </Button>
+
+        <NotificationsPanel />
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 gap-2 rounded-full px-1.5 hover:bg-accent/50 transition-colors">
+              <Avatar className="h-7 w-7 ring-2 ring-primary/10 ring-offset-2 ring-offset-background">
+                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-[10px] font-medium text-primary">
+                  {currentUser.fullName.split(' ').map(n => n[0]).join('')}
+                </AvatarFallback>
+              </Avatar>
+              <span className="hidden max-w-[12rem] truncate text-xs font-medium sm:inline">{currentUser.fullName}</span>
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          
+          <DropdownMenuContent align="end" className="w-48 rounded-xl border-border/50 shadow-lg">
+            <DropdownMenuItem 
+              onClick={() => {
+                logout()
+                navigate('/login')
+              }} 
+              className="cursor-pointer rounded-lg text-destructive focus:text-destructive"
+            >
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Mobile search overlay */}
+      {isSearchOpen && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 md:hidden">
+          <form onSubmit={handleSearch} className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search..."
+              className="h-10 w-full rounded-xl border-border/50 bg-background pl-9 pr-4 text-sm shadow-lg"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
+            />
+          </form>
+        </div>
+      )}
+    </header>
+  )
 }

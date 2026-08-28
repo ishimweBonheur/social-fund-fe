@@ -1,11 +1,49 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
+import GoogleLoginButton from '@/components/forms/GoogleLoginButton'
 import { FinmLogo } from '@/components/shared/FinmLogo'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
 import { dashboardFor } from '@/config/navigation'
 import { useApp } from '@/context/AppContext'
-import type { UserRole } from '@/types/app'
 
-export function LoginPage() { const { currentUser, login } = useApp(); const [role,setRole] = useState<UserRole>('ADMIN'); const navigate = useNavigate(); if (currentUser) return <Navigate to={dashboardFor(currentUser.role)} replace />; return <main className="grid min-h-screen place-items-center bg-background p-4"><Card className="w-full max-w-sm"><CardHeader><FinmLogo /><CardTitle className="pt-4">Welcome back</CardTitle><CardDescription>Choose a demo role to enter the Social Fund system.</CardDescription></CardHeader><CardContent className="space-y-4"><div><Label htmlFor="role">Role</Label><select id="role" value={role} onChange={(e) => setRole(e.target.value as UserRole)} className="mt-1 h-10 w-full rounded-xl border bg-card px-3 text-sm"><option value="ADMIN">Administrator</option><option value="MEMBER">Member</option></select></div><Button className="w-full" onClick={() => { login(role); navigate(dashboardFor(role)) }}>Sign in</Button></CardContent></Card></main> }
+export default function LoginPage() {
+  const { currentUser, loginWithGoogle } = useApp()
+  const navigate = useNavigate()
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  if (currentUser) return <Navigate to={dashboardFor(currentUser.role)} replace />
+
+  const handleCredential = async (credential: string) => {
+    setError('')
+    setIsLoading(true)
+    try {
+      const user = await loginWithGoogle(credential)
+      navigate(dashboardFor(user.role), { replace: true })
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Google login failed. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <main className="grid min-h-screen place-items-center bg-background p-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <FinmLogo />
+          <CardTitle className="pt-4">Welcome back</CardTitle>
+          <CardDescription>Sign in securely with your Google account to continue to Social Fund.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          <div className="flex justify-center">
+            <GoogleLoginButton disabled={isLoading} onCredential={handleCredential} onError={setError} />
+          </div>
+          {isLoading && <p className="text-center text-xs text-muted-foreground">Signing you in…</p>}
+          <p className="text-center text-xs text-muted-foreground">Your role and account status are determined securely by the Social Fund server.</p>
+        </CardContent>
+      </Card>
+    </main>
+  )
+}
