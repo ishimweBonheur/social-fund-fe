@@ -1,13 +1,5 @@
-import { getContributions } from '@/services/fundService'
-import DataPage from '@/pages/shared/DataPage'
+import ContributionsContent from '@/pages/shared/ContributionsContent'
 
 export default function MemberContributionsPage() {
-  return (
-    <DataPage 
-      title="My Contributions" 
-      description="Your complete contribution history" 
-      columns={['Member', 'Expected', 'Paid', 'Due Date', 'Payment Date', 'Method', 'Reference', 'Status']} 
-      loader={getContributions}
-    />
-  )
+  return <ContributionsContent />
 }

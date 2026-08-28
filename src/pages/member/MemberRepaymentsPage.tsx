@@ -1,13 +1,6 @@
-import { getRepayments } from '@/services/fundService'
-import DataPage from '@/pages/shared/DataPage'
+import EmptyState from '@/components/shared/EmptyState'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 export default function MemberRepaymentsPage() {
-  return (
-    <DataPage 
-      title="My Repayments" 
-      description="Your upcoming and completed loan repayments" 
-      columns={['Member', 'Loan', 'Expected', 'Paid', 'Due Date', 'Payment Date', 'Status']} 
-      loader={getRepayments}
-    />
-  )
+  return <div><PageHeader title="My Repayments" description="Loan repayment information" /><EmptyState title="Repayments are not available" description="The current backend does not expose a member repayment endpoint. Assistance payments are managed by administrators through the fund ledger." /></div>
 }

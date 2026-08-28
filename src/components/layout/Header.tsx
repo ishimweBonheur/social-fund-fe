@@ -26,19 +26,6 @@ export function Header() {
 
   return (
     <header className="relative flex h-12 w-full min-w-0 items-center justify-end gap-2 rounded-full border border-border/50 bg-card/90 px-2 shadow-sm backdrop-blur-sm transition-all sm:px-3 md:px-4">
-      <div className="hidden md:flex md:flex-1 md:items-center md:justify-end">
-    
-        <form onSubmit={handleSearch} className="relative w-full max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search members, contributions, loans..."
-            className="h-8 rounded-full border-border/50 bg-muted/50 pl-9 pr-4 text-sm transition-all placeholder:text-muted-foreground/60 focus:bg-background focus:border-primary/50"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </form>
-      </div>
       
       <div className="flex items-center gap-1 md:gap-2">
         {/* Search toggle - mobile */}

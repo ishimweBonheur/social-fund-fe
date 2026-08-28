@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { GoogleOAuthProvider } from '@react-oauth/google'
+import { Toaster } from 'sonner'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { dashboardFor } from '@/config/navigation'
 import { AppProvider, useApp } from '@/context/AppContext'
@@ -83,6 +84,7 @@ export default function App() {
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>
+      <Toaster position="top-right" richColors closeButton />
     </AppProvider>
   )
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID

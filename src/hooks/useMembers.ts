@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getApiErrorMessage } from '@/services/api'
-import { createMember, deleteMember, getMember, listMembers, updateMember, updateMemberStatus, type MemberQuery } from '@/services/memberService'
-import type { Member, MemberInput, MemberStatus } from '@/types/app'
+import { createMember, getMember, listMembers, updateMember, updateMemberStatus, type MemberQuery } from '@/services/memberService'
+import type { Member, MemberInput, MemberStatus, MemberUpdateInput } from '@/types/app'
 
 const emptyQuery: MemberQuery = {}
 
@@ -26,14 +26,18 @@ export function useMembers(initialQuery: MemberQuery = emptyQuery) {
     return () => { active = false }
   }, [initialQuery])
 
-  const save = async (input: MemberInput, id?: string) => {
-    const member = id ? await updateMember(id, input) : await createMember(input)
-    setMembers((items) => id ? items.map((item) => item.id === id ? member : item) : [member, ...items])
+  const create = async (input: MemberInput) => {
+    const member = await createMember(input)
+    setMembers((items) => [member, ...items])
+    return member
+  }
+  const update = async (id: string, input: MemberUpdateInput) => {
+    const member = await updateMember(id, input)
+    setMembers((items) => items.map((item) => item.id === id ? member : item))
     return member
   }
   const find = (id: string) => getMember(id)
-  const remove = async (id: string) => { await deleteMember(id); setMembers((items) => items.filter((item) => item.id !== id)) }
-  const changeStatus = async (id: string, status: MemberStatus) => { const member = await updateMemberStatus(id, status); setMembers((items) => items.map((item) => item.id === id ? member : item)) }
+  const changeStatus = async (id: string, status: MemberStatus) => { const changed = await updateMemberStatus(id, status); setMembers((items) => items.map((item) => item.id === id ? { ...item, status: changed.status } : item)) }
 
-  return { members, isLoading, error, setError, reload: load, save, find, remove, changeStatus }
+  return { members, isLoading, error, setError, reload: load, create, update, find, changeStatus }
 }

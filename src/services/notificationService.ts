@@ -1,11 +1,11 @@
 import { apiClient, type ApiEnvelope } from '@/services/api'
 import type { Notification, UserRole } from '@/types/app'
 
-interface NotificationDto { id: string; title: string; message: string; created_at?: string; time?: string; read?: boolean; is_read?: boolean; audience?: UserRole | 'ALL' }
+interface NotificationDto { ID: string; Type: string; Subject?: string; Message?: string; CreatedAt?: string; Status: string }
 export async function listNotifications(): Promise<Notification[]> {
-  const { data } = await apiClient.get<ApiEnvelope<NotificationDto[] | { notifications: NotificationDto[] }>>('/notifications')
-  const records = Array.isArray(data.data) ? data.data : data.data.notifications
-  return records.map((item) => ({ id: item.id, title: item.title, message: item.message, time: item.time || (item.created_at ? new Date(item.created_at).toLocaleString() : ''), read: item.is_read ?? item.read ?? false, audience: item.audience || 'ALL' }))
+  const { data } = await apiClient.get<ApiEnvelope<NotificationDto[]>>('/admin/notifications/')
+  return data.data.map((item) => ({ id: item.ID, title: item.Subject ?? item.Type, message: item.Message ?? '', time: item.CreatedAt ? new Date(item.CreatedAt).toLocaleString() : '', read: item.Status === 'SENT', audience: 'ADMIN' as UserRole, deliveryStatus: item.Status }))
 }
-export async function readNotification(id: string) { await apiClient.patch(`/notifications/${id}/read`) }
-export async function readAllNotifications() { await apiClient.patch('/notifications/read-all') }
+export async function readNotification(id: string) { void id; return Promise.resolve() }
+export async function readAllNotifications() { return Promise.resolve() }
+export async function retryNotification(id: string) { await apiClient.post(`/admin/notifications/${id}/retry`) }

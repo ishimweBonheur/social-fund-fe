@@ -5,6 +5,7 @@ import { FinmLogo } from '@/components/shared/FinmLogo'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { dashboardFor } from '@/config/navigation'
 import { useApp } from '@/context/AppContext'
+import { getApiErrorMessage } from '@/services/api'
 
 export default function LoginPage() {
   const { currentUser, loginWithGoogle } = useApp()
@@ -21,7 +22,7 @@ export default function LoginPage() {
       const user = await loginWithGoogle(credential)
       navigate(dashboardFor(user.role), { replace: true })
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Google login failed. Please try again.')
+      setError(getApiErrorMessage(reason, 'Google login failed. Please try again.'))
     } finally {
       setIsLoading(false)
     }

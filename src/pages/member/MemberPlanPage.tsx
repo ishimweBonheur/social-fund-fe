@@ -1,4 +1,4 @@
-import { getContributionPlans } from '@/services/fundService'
+import { getMemberContributionPlan } from '@/services/fundService'
 import DataPage from '@/pages/shared/DataPage'
 
 export default function MemberPlanPage() {
@@ -6,8 +6,9 @@ export default function MemberPlanPage() {
     <DataPage 
       title="My Contribution Plan" 
       description="Your current recurring contribution commitment" 
-      columns={['Member', 'Amount', 'Frequency', 'Start Date', 'End Date', 'Next Due Date', 'Status']} 
-      loader={getContributionPlans}
+      searchable={false}
+      columns={['Plan Amount', 'Frequency', 'Next Amount', 'Next Due Date', 'Reminder', 'Late Fee']}
+      loader={getMemberContributionPlan}
     />
   )
 }

@@ -20,5 +20,5 @@ export async function getCurrentUser(userId: string): Promise<User> {
 }
 
 export async function endSession(): Promise<void> {
-  await apiClient.post('/auth/logout')
+  return Promise.resolve()
 }

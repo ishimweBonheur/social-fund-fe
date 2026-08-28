@@ -53,7 +53,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const markAllNotificationsRead = useCallback(() => { setNotifications((items) => items.map((item) => item.audience === 'ALL' || item.audience === currentUser?.role ? { ...item, read: true } : item)); void readAllNotifications().catch(() => undefined) }, [currentUser?.role])
 
   useEffect(() => {
-    if (!currentUser) return
+    if (!currentUser || currentUser.role !== 'ADMIN') return
     let active = true
     void listNotifications().then((items) => { if (active) setNotifications(items) }).catch(() => { if (active) setNotifications([]) })
     return () => { active = false }
