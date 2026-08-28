@@ -1,4 +1,4 @@
-import { Bell, ChartNoAxesCombined, ClipboardCheck, FileClock, HandCoins, LayoutDashboard, ListChecks, Settings, UserRound, Users, WalletCards } from 'lucide-react'
+import { Activity, Bell, ChartNoAxesCombined, ClipboardCheck, FileClock, HandCoins, LayoutDashboard, ListChecks, Settings, UserRound, Users, WalletCards } from 'lucide-react'
 import type { UserRole } from '@/types/app'
 
 export const navigation = {
@@ -8,6 +8,7 @@ export const navigation = {
     { to: '/admin/loans', icon: HandCoins, label: 'Assistance Requests' }, { to: '/admin/repayments', icon: ClipboardCheck, label: 'Fund Ledger' },
     { to: '/admin/approvals', icon: ListChecks, label: 'Approvals' }, { to: '/admin/reports', icon: ChartNoAxesCombined, label: 'Reports' },
     { to: '/admin/notifications', icon: Bell, label: 'Notifications' }, { to: '/admin/audit-logs', icon: FileClock, label: 'Audit Logs' },
+    { to: '/admin/monitoring', icon: Activity, label: 'System Monitoring' },
     { to: '/admin/settings', icon: Settings, label: 'Settings' },
   ],
   MEMBER: [

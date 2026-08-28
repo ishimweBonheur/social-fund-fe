@@ -12,6 +12,7 @@ import ContributionsPage from '@/pages/admin/ContributionsPage'
 import ContributionReviewPage from '@/pages/admin/ContributionReviewPage'
 import LoansPage from '@/pages/admin/LoansPage'
 import MembersPage from '@/pages/admin/MembersPage'
+import MonitoringPage from '@/pages/admin/MonitoringPage'
 import NotificationsPage from '@/pages/admin/NotificationsPage'
 import RepaymentsPage from '@/pages/admin/RepaymentsPage'
 import ReportsPage from '@/pages/admin/ReportsPage'
@@ -60,6 +61,7 @@ function AppRoutes() {
           <Route path="/admin/reports" element={<ReportsPage />} />
           <Route path="/admin/notifications" element={<NotificationsPage />} />
           <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
+          <Route path="/admin/monitoring" element={<MonitoringPage />} />
           <Route path="/admin/settings" element={<SettingsPage />} />
         </Route>
         

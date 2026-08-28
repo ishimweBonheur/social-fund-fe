@@ -13,16 +13,29 @@ export interface DashboardData {
   nextRepayment?: { loan: string; amount: string; dueDate: string }
 }
 export interface AdminDashboardData {
-  metrics: Array<[string, string, string]>
+  summary: { membersTotal: number; membersActive: number; membersInactive: number; membersSuspended: number; expectedMonth: number; collectedMonth: number; outstanding: number; pendingContributions: number; overdueMembers: number; fundInflow: number; fundOutflow: number; fundBalance: number; assistancePending: number; assistanceApproved: number; notificationsFailed: number }
+  contributionPerformance: Array<{ month: string; expected: number; collected: number }>
+  fundMovement: Array<{ month: string; inflow: number; outflow: number }>
+  memberStatuses: Array<{ name: string; count: number }>
+  assistanceStatuses: Array<{ name: string; count: number }>
+  overdueBuckets: Array<{ name: string; count: number }>
+  contributionByFrequency: Array<{ frequency: string; expected: number; paid: number; outstanding: number; total: number; approved: number; pending: number; overdue: number; rejected: number }>
 }
 export interface MemberDashboardData {
-  metrics: Array<[string, string, string]>
+  summary: { totalContributed: number; outstanding: number; expectedMonth: number; paidMonth: number; contributionRate: number; pendingCount: number; overdueCount: number; assistanceReceived: number }
   nextDueDate?: string
-  nextExpectedAmount?: string
-  planAmount?: string
+  nextExpectedAmount?: number
+  planAmount?: number
   planFrequency?: string
   reminderFrequency?: string
-  planLateFee?: string
+  planLateFee?: number
+  gracePeriodDays?: number
+  effectiveOverdueDate?: string
+  contributionHistory: Array<{ month: string; expected: number; paid: number }>
+  paymentStatuses: Array<{ name: string; count: number }>
+  assistanceStatuses: Array<{ name: string; count: number }>
+  recentContributions: Array<{ dueDate: string; expected: number; paid: number; status: string }>
+  contributionByFrequency: Array<{ frequency: string; expected: number; paid: number; outstanding: number; total: number; approved: number; pending: number; overdue: number; rejected: number }>
 }
 
 const text = (value: unknown, fallback = '—') => value === null || value === undefined || value === '' ? fallback : String(value)
@@ -65,43 +78,49 @@ function mapDashboard(data: RecordDto): DashboardData {
     nextRepayment: data.next_repayment && typeof data.next_repayment === 'object' ? { loan: text((data.next_repayment as RecordDto).loan_reference), amount: money((data.next_repayment as RecordDto).amount), dueDate: date((data.next_repayment as RecordDto).due_date) } : undefined,
   }
 }
-export async function getAdminDashboard(): Promise<AdminDashboardData> {
-  const { data } = await apiClient.get<ApiEnvelope<RecordDto>>('/admin/dashboard/')
+const number = (value: unknown) => {
+  if (value === undefined || value === null || value === '') throw new Error('Dashboard response is missing a required numeric field.')
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) throw new Error('Dashboard response contains an invalid numeric field.')
+  return parsed
+}
+const counts = (value: unknown) => arrayData(value, 'items').map((item) => ({ name: text(item.name), count: number(item.count) }))
+const frequencies = (value: unknown) => arrayData(value, 'items').map((item) => ({ frequency:text(item.frequency),expected:number(item.expected),paid:number(item.collected),outstanding:number(item.outstanding),total:number(item.total),approved:number(item.approved),pending:number(item.pending),overdue:number(item.overdue),rejected:number(item.rejected) }))
+export async function getAdminDashboard(months: 6 | 12 = 6): Promise<AdminDashboardData> {
+  const { data } = await apiClient.get<ApiEnvelope<RecordDto>>('/admin/dashboard/', { params: { months } })
   const value = data.data
-  const fields: Array<[string, string, string]> = [
-    ['Total Members', text(value.MembersTotal, '0'), `${text(value.MembersActive, '0')} active`],
-    ['Inactive Members', text(value.MembersInactive, '0'), `${text(value.MembersSuspended, '0')} suspended`],
-    ['Expected This Month', money(value.ExpectedMonth), 'Scheduled contributions'],
-    ['Collected This Month', money(value.CollectedMonth), 'Approved contributions'],
-    ['Outstanding', money(value.Outstanding), `${text(value.OverdueMembers, '0')} overdue members`],
-    ['Pending Approvals', text(value.PendingApprovals, '0'), 'Contribution proofs'],
-    ['Fund Balance', money(value.FundBalance), `${money(value.FundIn)} in / ${money(value.FundOut)} out`],
-    ['Assistance Requests', text(value.AssistancePending, '0'), `${text(value.AssistanceApproved, '0')} approved`],
-    ['Failed Notifications', text(value.NotificationsFailed, '0'), 'Requires attention'],
-  ]
-  return { metrics: fields }
+  const summary = value.summary as RecordDto
+  return {
+    summary: { membersTotal:number(summary.members_total),membersActive:number(summary.members_active),membersInactive:number(summary.members_inactive),membersSuspended:number(summary.members_suspended),expectedMonth:number(summary.expected_this_month),collectedMonth:number(summary.collected_this_month),outstanding:number(summary.outstanding_amount),pendingContributions:number(summary.pending_contributions),overdueMembers:number(summary.overdue_members),fundInflow:number(summary.fund_inflow),fundOutflow:number(summary.fund_outflow),fundBalance:number(summary.fund_balance),assistancePending:number(summary.assistance_pending),assistanceApproved:number(summary.assistance_approved),notificationsFailed:number(summary.notifications_failed) },
+    contributionPerformance: frequencies(value.contribution_by_frequency).map((item)=>({month:item.frequency,expected:item.expected,collected:item.paid})),
+    fundMovement: arrayData(value.fund_movement,'items').map((item)=>({month:text(item.month),inflow:number(item.inflow),outflow:number(item.outflow)})),
+    memberStatuses: counts(value.member_statuses), assistanceStatuses: counts(value.assistance_statuses), overdueBuckets: counts(value.overdue_buckets),
+    contributionByFrequency: frequencies(value.contribution_by_frequency),
+  }
 }
 export async function getMemberDashboard(): Promise<MemberDashboardData> {
   const { data } = await apiClient.get<ApiEnvelope<RecordDto>>('/dashboard/')
   const value = data.data
+  const summary = value.summary as RecordDto
   return {
-    metrics: [
-      ['Total Contributed', money(value.total_contributed), 'Approved contributions'],
-      ['Outstanding', money(value.outstanding_amount), `${text(value.overdue_count, '0')} overdue`],
-      ['Contribution Rate', `${text(value.contribution_rate, '0')}%`, `${text(value.approved_count, '0')} approved`],
-      ['Pending', text(value.pending_count, '0'), `${text(value.rejected_count, '0')} rejected`],
-    ],
-    nextDueDate: value.next_due_date ? date(value.next_due_date) : undefined,
-    nextExpectedAmount: value.next_expected_amount !== undefined ? money(value.next_expected_amount) : undefined,
-    planAmount: value.plan_amount !== undefined ? money(value.plan_amount) : undefined,
-    planFrequency: value.plan_frequency ? text(value.plan_frequency) : undefined,
-    reminderFrequency: value.reminder_frequency ? text(value.reminder_frequency) : undefined,
-    planLateFee: value.plan_late_fee !== undefined ? `${text(value.plan_late_fee)}%` : undefined,
+    summary: { totalContributed:number(summary.total_contributed),outstanding:number(summary.outstanding_amount),expectedMonth:number(summary.expected_this_month),paidMonth:number(summary.paid_this_month),contributionRate:number(summary.contribution_rate),pendingCount:number(summary.pending_count),overdueCount:number(summary.overdue_count),assistanceReceived:number(summary.assistance_received) },
+    nextDueDate: summary.next_due_date ? text(summary.next_due_date) : undefined,
+    nextExpectedAmount: summary.next_expected_amount !== undefined ? number(summary.next_expected_amount) : undefined,
+    planAmount: summary.plan_amount !== undefined ? number(summary.plan_amount) : undefined,
+    planFrequency: summary.plan_frequency ? text(summary.plan_frequency) : undefined,
+    reminderFrequency: summary.reminder_frequency ? text(summary.reminder_frequency) : undefined,
+    planLateFee: summary.plan_late_fee !== undefined ? number(summary.plan_late_fee) : undefined,
+    gracePeriodDays: summary.grace_period_days !== undefined ? number(summary.grace_period_days) : undefined,
+    effectiveOverdueDate: summary.effective_overdue_date ? text(summary.effective_overdue_date) : undefined,
+    contributionHistory: frequencies(value.contribution_by_frequency).map((item)=>({month:item.frequency,expected:item.expected,paid:item.paid})),
+    paymentStatuses: counts(value.payment_statuses), assistanceStatuses: counts(value.assistance_statuses),
+    recentContributions: arrayData(value.recent_contributions,'items').map((item)=>({dueDate:text(item.due_date),expected:number(item.expected),paid:number(item.paid),status:text(item.status)})),
+    contributionByFrequency: frequencies(value.contribution_by_frequency),
   }
 }
 export async function getMemberContributionPlan() {
   const dashboard = await getMemberDashboard()
-  return [[dashboard.planAmount ?? '—', dashboard.planFrequency ?? '—', dashboard.nextExpectedAmount ?? '—', dashboard.nextDueDate ?? '—', dashboard.reminderFrequency ?? '—', dashboard.planLateFee ?? '—']]
+  return [[dashboard.planAmount === undefined ? '—' : money(dashboard.planAmount), dashboard.planFrequency ?? '—', dashboard.nextExpectedAmount === undefined ? '—' : money(dashboard.nextExpectedAmount), dashboard.nextDueDate ? date(dashboard.nextDueDate) : '—', dashboard.reminderFrequency ?? '—', dashboard.planLateFee === undefined ? '—' : `${dashboard.planLateFee}%`]]
 }
 export async function getReports() {
   const { data } = await apiClient.get<ApiEnvelope<RecordDto>>('/admin/fund/summary')
