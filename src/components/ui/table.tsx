@@ -8,37 +8,88 @@ const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableE
     const [page, setPage] = React.useState(1)
     const tableRef = React.useRef<HTMLTableElement | null>(null)
     const sections = React.Children.toArray(children)
-    const bodyIndex = sections.findIndex((child) => React.isValidElement(child) && (child.type as { displayName?: string }).displayName === 'TableBody')
-    const body = bodyIndex >= 0 ? sections[bodyIndex] as React.ReactElement<{ children?: React.ReactNode }> : undefined
+    const bodyIndex = sections.findIndex(
+      (child) =>
+        React.isValidElement(child) &&
+        (child.type as { displayName?: string }).displayName === 'TableBody',
+    )
+    const body =
+      bodyIndex >= 0
+        ? (sections[bodyIndex] as React.ReactElement<{ children?: React.ReactNode }>)
+        : undefined
     const rows = body ? React.Children.toArray(body.props.children) : []
     const pageCount = Math.max(1, Math.ceil(rows.length / DEFAULT_PAGE_SIZE))
     const currentPage = Math.min(page, pageCount)
     const start = (currentPage - 1) * DEFAULT_PAGE_SIZE
 
-    React.useEffect(() => { if (page > pageCount) setPage(pageCount) }, [page, pageCount])
+    React.useEffect(() => {
+      if (page > pageCount) setPage(pageCount)
+    }, [page, pageCount])
     React.useLayoutEffect(() => {
       const table = tableRef.current
       if (!table) return
-      const labels = Array.from(table.querySelectorAll('thead th')).map((cell) => cell.textContent?.trim() || '')
+      const labels = Array.from(table.querySelectorAll('thead th')).map(
+        (cell) => cell.textContent?.trim() || '',
+      )
       table.querySelectorAll('tbody tr').forEach((row) => {
-        Array.from(row.children).forEach((cell, index) => { if (cell instanceof HTMLElement) cell.dataset.label = labels[index] ?? '' })
+        Array.from(row.children).forEach((cell, index) => {
+          if (cell instanceof HTMLElement) cell.dataset.label = labels[index] ?? ''
+        })
       })
     }, [children, currentPage])
 
-    const visibleSections = body ? sections.map((section, index) => index === bodyIndex ? React.cloneElement(body, {}, rows.slice(start, start + DEFAULT_PAGE_SIZE)) : section) : sections
+    const visibleSections = body
+      ? sections.map((section, index) =>
+          index === bodyIndex
+            ? React.cloneElement(body, {}, rows.slice(start, start + DEFAULT_PAGE_SIZE))
+            : section,
+        )
+      : sections
     const setRef = (node: HTMLTableElement | null) => {
       tableRef.current = node
       if (typeof forwardedRef === 'function') forwardedRef(node)
       else if (forwardedRef) forwardedRef.current = node
     }
 
-    return <div className="relative w-full">
-      <div className="w-full overflow-x-auto">
-        <table ref={setRef} className={cn('w-full caption-bottom text-xs font-normal max-sm:block', className)} {...props}>{visibleSections}</table>
+    return (
+      <div className="relative w-full">
+        <div className="w-full overflow-x-auto">
+          <table
+            ref={setRef}
+            className={cn('w-full caption-bottom text-xs font-normal max-sm:block', className)}
+            {...props}
+          >
+            {visibleSections}
+          </table>
+        </div>
+        {rows.length > DEFAULT_PAGE_SIZE && (
+          <div className="flex items-center justify-between gap-3 border-t px-3 py-3 text-xs text-muted-foreground">
+            <span>
+              Page {currentPage} of {pageCount} · {rows.length} records
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="rounded-lg border px-3 py-1.5 text-foreground disabled:opacity-40"
+                disabled={currentPage === 1}
+                onClick={() => setPage((value) => Math.max(1, value - 1))}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                className="rounded-lg border px-3 py-1.5 text-foreground disabled:opacity-40"
+                disabled={currentPage === pageCount}
+                onClick={() => setPage((value) => Math.min(pageCount, value + 1))}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-      {rows.length > DEFAULT_PAGE_SIZE && <div className="flex items-center justify-between gap-3 border-t px-3 py-3 text-xs text-muted-foreground"><span>Page {currentPage} of {pageCount} · {rows.length} records</span><div className="flex gap-2"><button type="button" className="rounded-lg border px-3 py-1.5 text-foreground disabled:opacity-40" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>Previous</button><button type="button" className="rounded-lg border px-3 py-1.5 text-foreground disabled:opacity-40" disabled={currentPage === pageCount} onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>Next</button></div></div>}
-    </div>
-  }
+    )
+  },
 )
 Table.displayName = 'Table'
 
@@ -46,7 +97,11 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('[&_tr]:border-b [&_tr]:border-border/60 max-sm:hidden', className)} {...props} />
+  <thead
+    ref={ref}
+    className={cn('[&_tr]:border-b [&_tr]:border-border/60 max-sm:hidden', className)}
+    {...props}
+  />
 ))
 TableHeader.displayName = 'TableHeader'
 
@@ -54,7 +109,11 @@ const TableBody = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <tbody ref={ref} className={cn('[&_tr:last-child]:border-0 max-sm:block max-sm:space-y-3 max-sm:p-3', className)} {...props} />
+  <tbody
+    ref={ref}
+    className={cn('[&_tr:last-child]:border-0 max-sm:block max-sm:space-y-3 max-sm:p-3', className)}
+    {...props}
+  />
 ))
 TableBody.displayName = 'TableBody'
 
@@ -64,11 +123,11 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
       ref={ref}
       className={cn(
         'border-b border-border/40 transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted max-sm:block max-sm:rounded-xl max-sm:border max-sm:bg-card max-sm:p-2',
-        className
+        className,
       )}
       {...props}
     />
-  )
+  ),
 )
 TableRow.displayName = 'TableRow'
 
@@ -80,7 +139,7 @@ const TableHead = React.forwardRef<
     ref={ref}
     className={cn(
       'h-8 px-3 text-left align-middle text-[11px] font-semibold text-muted-foreground',
-      className
+      className,
     )}
     {...props}
   />
@@ -94,7 +153,13 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     colSpan={colSpan}
-    className={cn("px-3 py-2.5 align-middle text-xs font-normal", colSpan && colSpan > 1 ? 'max-sm:block max-sm:text-left' : "max-sm:flex max-sm:min-h-9 max-sm:items-center max-sm:justify-between max-sm:gap-4 max-sm:px-2 max-sm:py-1.5 max-sm:text-right before:max-sm:shrink-0 before:max-sm:text-left before:max-sm:text-[11px] before:max-sm:font-semibold before:max-sm:text-muted-foreground before:max-sm:content-[attr(data-label)]", className)}
+    className={cn(
+      'px-3 py-2.5 align-middle text-xs font-normal',
+      colSpan && colSpan > 1
+        ? 'max-sm:block max-sm:text-left'
+        : 'max-sm:flex max-sm:min-h-9 max-sm:items-center max-sm:justify-between max-sm:gap-4 max-sm:px-2 max-sm:py-1.5 max-sm:text-right before:max-sm:shrink-0 before:max-sm:text-left before:max-sm:text-[11px] before:max-sm:font-semibold before:max-sm:text-muted-foreground before:max-sm:content-[attr(data-label)]',
+      className,
+    )}
     {...props}
   />
 ))

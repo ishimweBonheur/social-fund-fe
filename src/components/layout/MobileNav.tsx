@@ -24,7 +24,7 @@ export function MobileNav() {
             className={({ isActive }) =>
               cn(
                 'group flex min-w-9 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 pb-1.5 text-[10px] font-medium text-muted-foreground transition-colors sm:min-w-12 sm:px-1.5',
-                isActive && 'text-[#1a7a4a]'
+                isActive && 'text-[#1a7a4a]',
               )
             }
           >
@@ -34,14 +34,15 @@ export function MobileNav() {
                   aria-hidden="true"
                   className={cn(
                     'flex h-7 w-12 items-center justify-center rounded-lg transition-colors sm:w-14',
-                    isActive && 'bg-[#1a7a4a] text-white'
+                    isActive && 'bg-[#1a7a4a] text-white',
                   )}
                 >
-                  <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
+                  <Icon
+                    className="h-[18px] w-[18px]"
+                    strokeWidth={2}
+                  />
                 </span>
-                <span className="hidden max-w-full truncate leading-none sm:block">
-                  {label}
-                </span>
+                <span className="hidden max-w-full truncate leading-none sm:block">{label}</span>
               </>
             )}
           </NavLink>

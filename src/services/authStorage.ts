@@ -8,7 +8,7 @@ export const authStorage = {
   getUser(): User | null {
     try {
       const value = localStorage.getItem(USER_KEY)
-      return value ? JSON.parse(value) as User : null
+      return value ? (JSON.parse(value) as User) : null
     } catch {
       localStorage.removeItem(USER_KEY)
       return null

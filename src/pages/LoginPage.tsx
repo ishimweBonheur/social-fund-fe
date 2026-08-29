@@ -13,7 +13,13 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  if (currentUser) return <Navigate to={dashboardFor(currentUser.role)} replace />
+  if (currentUser)
+    return (
+      <Navigate
+        to={dashboardFor(currentUser.role)}
+        replace
+      />
+    )
 
   const handleCredential = async (credential: string) => {
     setError('')
@@ -34,15 +40,32 @@ export default function LoginPage() {
         <CardHeader>
           <FinmLogo />
           <CardTitle className="pt-4">Welcome back</CardTitle>
-          <CardDescription>Sign in securely with your Google account to continue to Social Fund.</CardDescription>
+          <CardDescription>
+            Sign in securely with your Google account to continue to Social Fund.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          {error && (
+            <p
+              role="alert"
+              className="rounded-xl bg-red-50 p-3 text-sm text-red-700"
+            >
+              {error}
+            </p>
+          )}
           <div className="flex justify-center">
-            <GoogleLoginButton disabled={isLoading} onCredential={handleCredential} onError={setError} />
+            <GoogleLoginButton
+              disabled={isLoading}
+              onCredential={handleCredential}
+              onError={setError}
+            />
           </div>
-          {isLoading && <p className="text-center text-xs text-muted-foreground">Signing you in…</p>}
-          <p className="text-center text-xs text-muted-foreground">Your role and account status are determined securely by the Social Fund server.</p>
+          {isLoading && (
+            <p className="text-center text-xs text-muted-foreground">Signing you in…</p>
+          )}
+          <p className="text-center text-xs text-muted-foreground">
+            Your role and account status are determined securely by the Social Fund server.
+          </p>
         </CardContent>
       </Card>
     </main>

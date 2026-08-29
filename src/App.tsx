@@ -28,55 +28,143 @@ import type { UserRole } from '@/types/app'
 
 function RoleGuard({ role }: { role: UserRole }) {
   const { currentUser, isAuthLoading } = useApp()
-  if (isAuthLoading) return <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">Loading…</div>
-  
-  if (!currentUser) return <Navigate to="/login" replace />
-  if (currentUser.role !== role) return <Navigate to={dashboardFor(currentUser.role)} replace />
-  
+  if (isAuthLoading)
+    return (
+      <div className="grid min-h-screen place-items-center text-sm text-muted-foreground">
+        Loading…
+      </div>
+    )
+
+  if (!currentUser)
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    )
+  if (currentUser.role !== role)
+    return (
+      <Navigate
+        to={dashboardFor(currentUser.role)}
+        replace
+      />
+    )
+
   return <Outlet />
 }
 
 function HomeRedirect() {
   const { currentUser } = useApp()
-  return <Navigate to={currentUser ? dashboardFor(currentUser.role) : '/login'} replace />
+  return (
+    <Navigate
+      to={currentUser ? dashboardFor(currentUser.role) : '/login'}
+      replace
+    />
+  )
 }
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      
+      <Route
+        path="/login"
+        element={<LoginPage />}
+      />
+
       <Route element={<AppLayout />}>
         {/* Admin Routes */}
         <Route element={<RoleGuard role="ADMIN" />}>
-          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
-          <Route path="/admin/members" element={<MembersPage />} />
-          <Route path="/admin/contribution-plans" element={<ContributionPlansPage />} />
-          <Route path="/admin/contributions" element={<ContributionsPage />} />
-          <Route path="/admin/contributions/:id/review" element={<ContributionReviewPage />} />
-          <Route path="/admin/loans" element={<LoansPage />} />
-          <Route path="/admin/repayments" element={<RepaymentsPage />} />
-          <Route path="/admin/approvals" element={<ApprovalsPage />} />
-          <Route path="/admin/notifications" element={<NotificationsPage />} />
-          <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
-          <Route path="/admin/monitoring" element={<MonitoringPage />} />
-          <Route path="/admin/settings" element={<SettingsPage />} />
+          <Route
+            path="/admin/dashboard"
+            element={<AdminDashboardPage />}
+          />
+          <Route
+            path="/admin/members"
+            element={<MembersPage />}
+          />
+          <Route
+            path="/admin/contribution-plans"
+            element={<ContributionPlansPage />}
+          />
+          <Route
+            path="/admin/contributions"
+            element={<ContributionsPage />}
+          />
+          <Route
+            path="/admin/contributions/:id/review"
+            element={<ContributionReviewPage />}
+          />
+          <Route
+            path="/admin/loans"
+            element={<LoansPage />}
+          />
+          <Route
+            path="/admin/repayments"
+            element={<RepaymentsPage />}
+          />
+          <Route
+            path="/admin/approvals"
+            element={<ApprovalsPage />}
+          />
+          <Route
+            path="/admin/notifications"
+            element={<NotificationsPage />}
+          />
+          <Route
+            path="/admin/audit-logs"
+            element={<AuditLogsPage />}
+          />
+          <Route
+            path="/admin/monitoring"
+            element={<MonitoringPage />}
+          />
+          <Route
+            path="/admin/settings"
+            element={<SettingsPage />}
+          />
         </Route>
-        
+
         {/* Member Routes */}
         <Route element={<RoleGuard role="MEMBER" />}>
-          <Route path="/member/dashboard" element={<MemberDashboardPage />} />
-          <Route path="/member/contributions" element={<MemberContributionsPage />} />
-          <Route path="/member/contribution-plan" element={<MemberPlanPage />} />
-          <Route path="/member/loans" element={<MemberLoansPage />} />
-          <Route path="/member/repayments" element={<MemberRepaymentsPage />} />
-          <Route path="/member/transactions" element={<MemberRepaymentsPage />} />
-          <Route path="/member/notifications" element={<MemberNotificationsPage />} />
-          <Route path="/member/profile" element={<MemberProfilePage />} />
+          <Route
+            path="/member/dashboard"
+            element={<MemberDashboardPage />}
+          />
+          <Route
+            path="/member/contributions"
+            element={<MemberContributionsPage />}
+          />
+          <Route
+            path="/member/contribution-plan"
+            element={<MemberPlanPage />}
+          />
+          <Route
+            path="/member/loans"
+            element={<MemberLoansPage />}
+          />
+          <Route
+            path="/member/repayments"
+            element={<MemberRepaymentsPage />}
+          />
+          <Route
+            path="/member/transactions"
+            element={<MemberRepaymentsPage />}
+          />
+          <Route
+            path="/member/notifications"
+            element={<MemberNotificationsPage />}
+          />
+          <Route
+            path="/member/profile"
+            element={<MemberProfilePage />}
+          />
         </Route>
       </Route>
-      
-      <Route path="*" element={<HomeRedirect />} />
+
+      <Route
+        path="*"
+        element={<HomeRedirect />}
+      />
     </Routes>
   )
 }
@@ -87,9 +175,17 @@ export default function App() {
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>
-      <Toaster position="top-right" richColors closeButton />
+      <Toaster
+        position="top-right"
+        richColors
+        closeButton
+      />
     </AppProvider>
   )
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-  return clientId ? <GoogleOAuthProvider clientId={clientId}>{application}</GoogleOAuthProvider> : application
+  return clientId ? (
+    <GoogleOAuthProvider clientId={clientId}>{application}</GoogleOAuthProvider>
+  ) : (
+    application
+  )
 }

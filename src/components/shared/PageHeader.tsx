@@ -16,7 +16,9 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
     >
       <div className="min-w-0">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
-        {description && <p className="mt-0.5 text-sm font-normal text-muted-foreground">{description}</p>}
+        {description && (
+          <p className="mt-0.5 text-sm font-normal text-muted-foreground">{description}</p>
+        )}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </motion.div>

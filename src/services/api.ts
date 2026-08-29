@@ -1,8 +1,14 @@
 import axios, { AxiosError } from 'axios'
 import { authStorage } from '@/services/authStorage'
 
-export interface ApiEnvelope<T> { success?: boolean; message?: string; data: T }
-export interface ApiErrorBody { error?: { code?: string; message?: string } }
+export interface ApiEnvelope<T> {
+  success?: boolean
+  message?: string
+  data: T
+}
+export interface ApiErrorBody {
+  error?: { code?: string; message?: string }
+}
 
 export const apiClient = axios.create({
   baseURL: (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, ''),
@@ -24,7 +30,7 @@ apiClient.interceptors.response.use(
       window.dispatchEvent(new Event('social-fund:unauthorized'))
     }
     return Promise.reject(error)
-  }
+  },
 )
 
 export function getApiErrorMessage(error: unknown, fallback = 'Unable to complete the request.') {

@@ -7,4 +7,5 @@ export const chartTheme = {
 }
 
 export const formatCurrency = (value: number) => `${value.toLocaleString()} RWF`
-export const formatCompact = (value: number) => Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
+export const formatCompact = (value: number) =>
+  Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(value)

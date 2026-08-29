@@ -1,17 +1,132 @@
 import { apiClient, type ApiEnvelope } from '@/services/api'
 
-export type ContributionStatus = 'UPCOMING' | 'DUE' | 'OVERDUE' | 'PENDING' | 'APPROVED' | 'REJECTED'
-interface ContributionDto { ID: string; UserID: string; ContributionPlanID: string; ExpectedAmount: string; LateFeePercentage?: string; LateFeeAmount: string; OverdueAt?: string; DueDate: string; PaidAmount?: string; PaymentDate?: string; PaymentMethod?: string; TransactionReference?: string; ProofURL?: string; ProofUploadedAt?: string; Status: ContributionStatus; RejectionReason?: string; ApprovedBy?: string; ApprovedAt?: string; Notes?: string; CreatedAt: string; UpdatedAt: string; member_name?: string; member_email?: string; total_due?: string }
-export interface Contribution { id: string; userId: string; memberName?: string; memberEmail?: string; expectedAmount: string; lateFeeAmount: string; totalDue: string; dueDate: string; paidAmount?: string; paymentDate?: string; paymentMethod?: string; transactionReference?: string; proofUploadedAt?: string; status: ContributionStatus; rejectionReason?: string; notes?: string }
-const map = (value: ContributionDto): Contribution => ({ id: value.ID, userId: value.UserID, memberName: value.member_name, memberEmail: value.member_email, expectedAmount: value.ExpectedAmount, lateFeeAmount: value.LateFeeAmount, totalDue: value.total_due ?? String(Number(value.ExpectedAmount) + Number(value.LateFeeAmount)), dueDate: value.DueDate, paidAmount: value.PaidAmount, paymentDate: value.PaymentDate, paymentMethod: value.PaymentMethod, transactionReference: value.TransactionReference, proofUploadedAt: value.ProofUploadedAt, status: value.Status, rejectionReason: value.RejectionReason, notes: value.Notes })
-export async function listMyContributions() { const { data } = await apiClient.get<{ data: ContributionDto[] }>('/contributions/', { params: { limit: 100 } }); return data.data.map(map) }
-export async function listPendingContributions(limit = 100) { const { data } = await apiClient.get<{ data: ContributionDto[] }>('/admin/contributions/pending', { params: { limit } }); return data.data.map(map) }
-export async function listAdminContributions(query: { search?: string; status?: ContributionStatus; page?: number; pageSize?: number } = {}) { const limit=query.pageSize??10;const page=query.page??1;const {data}=await apiClient.get<{data:ContributionDto[];total:number}>('/admin/contributions/',{params:{search:query.search||undefined,status:query.status,limit,offset:(page-1)*limit}});return {items:data.data.map(map),total:data.total,page,pageSize:limit} }
-export async function getContribution(id: string) { const { data } = await apiClient.get<ApiEnvelope<ContributionDto>>(`/contributions/${id}`); return map(data.data) }
-export async function getOutstanding() { const { data } = await apiClient.get<ApiEnvelope<{ outstanding_amount: string; overdue_count: number }>>('/contributions/outstanding'); return data.data }
-export async function submitContributionProof(id: string, input: { amount: string; paymentMethod: string; transactionReference: string; proof: File }) { const body = new FormData(); body.set('amount', input.amount); body.set('payment_method', input.paymentMethod); body.set('transaction_reference', input.transactionReference); body.set('proof', input.proof); await apiClient.post(`/contributions/${id}/proof`, body, { headers: { 'Content-Type': 'multipart/form-data' } }) }
+export type ContributionStatus =
+  | 'UPCOMING'
+  | 'DUE'
+  | 'OVERDUE'
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED'
+interface ContributionDto {
+  ID: string
+  UserID: string
+  ContributionPlanID: string
+  ExpectedAmount: string
+  LateFeePercentage?: string
+  LateFeeAmount: string
+  OverdueAt?: string
+  DueDate: string
+  PaidAmount?: string
+  PaymentDate?: string
+  PaymentMethod?: string
+  TransactionReference?: string
+  ProofURL?: string
+  ProofUploadedAt?: string
+  Status: ContributionStatus
+  RejectionReason?: string
+  ApprovedBy?: string
+  ApprovedAt?: string
+  Notes?: string
+  CreatedAt: string
+  UpdatedAt: string
+  member_name?: string
+  member_email?: string
+  total_due?: string
+}
+export interface Contribution {
+  id: string
+  userId: string
+  memberName?: string
+  memberEmail?: string
+  expectedAmount: string
+  lateFeeAmount: string
+  totalDue: string
+  dueDate: string
+  paidAmount?: string
+  paymentDate?: string
+  paymentMethod?: string
+  transactionReference?: string
+  proofUploadedAt?: string
+  status: ContributionStatus
+  rejectionReason?: string
+  notes?: string
+}
+const map = (value: ContributionDto): Contribution => ({
+  id: value.ID,
+  userId: value.UserID,
+  memberName: value.member_name,
+  memberEmail: value.member_email,
+  expectedAmount: value.ExpectedAmount,
+  lateFeeAmount: value.LateFeeAmount,
+  totalDue: value.total_due ?? String(Number(value.ExpectedAmount) + Number(value.LateFeeAmount)),
+  dueDate: value.DueDate,
+  paidAmount: value.PaidAmount,
+  paymentDate: value.PaymentDate,
+  paymentMethod: value.PaymentMethod,
+  transactionReference: value.TransactionReference,
+  proofUploadedAt: value.ProofUploadedAt,
+  status: value.Status,
+  rejectionReason: value.RejectionReason,
+  notes: value.Notes,
+})
+export async function listMyContributions() {
+  const { data } = await apiClient.get<{ data: ContributionDto[] }>('/contributions/', {
+    params: { limit: 100 },
+  })
+  return data.data.map(map)
+}
+export async function listPendingContributions(limit = 100) {
+  const { data } = await apiClient.get<{ data: ContributionDto[] }>(
+    '/admin/contributions/pending',
+    { params: { limit } },
+  )
+  return data.data.map(map)
+}
+export async function listAdminContributions(
+  query: { search?: string; status?: ContributionStatus; page?: number; pageSize?: number } = {},
+) {
+  const limit = query.pageSize ?? 10
+  const page = query.page ?? 1
+  const { data } = await apiClient.get<{ data: ContributionDto[]; total: number }>(
+    '/admin/contributions/',
+    {
+      params: {
+        search: query.search || undefined,
+        status: query.status,
+        limit,
+        offset: (page - 1) * limit,
+      },
+    },
+  )
+  return { items: data.data.map(map), total: data.total, page, pageSize: limit }
+}
+export async function getContribution(id: string) {
+  const { data } = await apiClient.get<ApiEnvelope<ContributionDto>>(`/contributions/${id}`)
+  return map(data.data)
+}
+export async function getOutstanding() {
+  const { data } = await apiClient.get<
+    ApiEnvelope<{ outstanding_amount: string; overdue_count: number }>
+  >('/contributions/outstanding')
+  return data.data
+}
+export async function submitContributionProof(
+  id: string,
+  input: { amount: string; paymentMethod: string; transactionReference: string; proof: File },
+) {
+  const body = new FormData()
+  body.set('amount', input.amount)
+  body.set('payment_method', input.paymentMethod)
+  body.set('transaction_reference', input.transactionReference)
+  body.set('proof', input.proof)
+  await apiClient.post(`/contributions/${id}/proof`, body, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+}
 export async function getContributionProof(id: string) {
-  const { data } = await apiClient.get<ApiEnvelope<{ url: string; expires_in: number }>>(`/contributions/${id}/proof`)
+  const { data } = await apiClient.get<ApiEnvelope<{ url: string; expires_in: number }>>(
+    `/contributions/${id}/proof`,
+  )
   const apiBase = new URL(apiClient.defaults.baseURL || '/api/v1', window.location.origin)
   const proofURL = new URL(data.data.url, apiBase.origin).toString()
   let blob: Blob
@@ -25,6 +140,29 @@ export async function getContributionProof(id: string) {
   }
   return { url: URL.createObjectURL(blob), expiresIn: data.data.expires_in }
 }
-export async function approveContribution(id: string, notes?: string) { await apiClient.post(`/contributions/${id}/approve`, { notes: notes || undefined }) }
-export async function rejectContribution(id: string, reason: string) { await apiClient.post(`/contributions/${id}/reject`, { reason }) }
-export async function validateContributionReviewToken(id: string, token: string, action: 'approve' | 'reject') { const { data } = await apiClient.post<ApiEnvelope<{ valid: boolean; action: string; id: string; member_name: string; ExpectedAmount: string; LateFeeAmount: string; PaidAmount?: string; PaymentMethod?: string; TransactionReference?: string }>>(`/contributions/${id}/review-token/validate`, { token, action }); return data.data }
+export async function approveContribution(id: string, notes?: string) {
+  await apiClient.post(`/contributions/${id}/approve`, { notes: notes || undefined })
+}
+export async function rejectContribution(id: string, reason: string) {
+  await apiClient.post(`/contributions/${id}/reject`, { reason })
+}
+export async function validateContributionReviewToken(
+  id: string,
+  token: string,
+  action: 'approve' | 'reject',
+) {
+  const { data } = await apiClient.post<
+    ApiEnvelope<{
+      valid: boolean
+      action: string
+      id: string
+      member_name: string
+      ExpectedAmount: string
+      LateFeeAmount: string
+      PaidAmount?: string
+      PaymentMethod?: string
+      TransactionReference?: string
+    }>
+  >(`/contributions/${id}/review-token/validate`, { token, action })
+  return data.data
+}
