@@ -15,7 +15,6 @@ import MembersPage from '@/pages/admin/MembersPage'
 import MonitoringPage from '@/pages/admin/MonitoringPage'
 import NotificationsPage from '@/pages/admin/NotificationsPage'
 import RepaymentsPage from '@/pages/admin/RepaymentsPage'
-import ReportsPage from '@/pages/admin/ReportsPage'
 import SettingsPage from '@/pages/admin/SettingsPage'
 import LoginPage from '@/pages/LoginPage'
 import MemberContributionsPage from '@/pages/member/MemberContributionsPage'
@@ -58,7 +57,6 @@ function AppRoutes() {
           <Route path="/admin/loans" element={<LoansPage />} />
           <Route path="/admin/repayments" element={<RepaymentsPage />} />
           <Route path="/admin/approvals" element={<ApprovalsPage />} />
-          <Route path="/admin/reports" element={<ReportsPage />} />
           <Route path="/admin/notifications" element={<NotificationsPage />} />
           <Route path="/admin/audit-logs" element={<AuditLogsPage />} />
           <Route path="/admin/monitoring" element={<MonitoringPage />} />
@@ -72,6 +70,7 @@ function AppRoutes() {
           <Route path="/member/contribution-plan" element={<MemberPlanPage />} />
           <Route path="/member/loans" element={<MemberLoansPage />} />
           <Route path="/member/repayments" element={<MemberRepaymentsPage />} />
+          <Route path="/member/transactions" element={<MemberRepaymentsPage />} />
           <Route path="/member/notifications" element={<MemberNotificationsPage />} />
           <Route path="/member/profile" element={<MemberProfilePage />} />
         </Route>

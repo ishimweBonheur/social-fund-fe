@@ -1,9 +1,9 @@
-import { ChevronDown, Search, X } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Search, Settings, UserRound, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { useApp } from '@/context/AppContext'
 import { NotificationsPanel } from './NotificationsPanel'
@@ -54,13 +54,23 @@ export function Header() {
           </DropdownMenuTrigger>
           
           <DropdownMenuContent align="end" className="w-48 rounded-xl border-border/50 shadow-lg">
+            <DropdownMenuItem onClick={() => navigate(`/${currentUser.role.toLowerCase()}/notifications`)} className="gap-2">
+              <Bell className="h-4 w-4" />
+              Notifications
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(currentUser.role === 'ADMIN' ? '/admin/settings' : '/member/profile')} className="gap-2">
+              {currentUser.role === 'ADMIN' ? <Settings className="h-4 w-4" /> : <UserRound className="h-4 w-4" />}
+              {currentUser.role === 'ADMIN' ? 'Settings' : 'Profile'}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={() => {
                 logout()
                 navigate('/login')
               }} 
-              className="cursor-pointer rounded-lg text-destructive focus:text-destructive"
+              className="cursor-pointer gap-2 rounded-lg text-destructive focus:text-destructive"
             >
+              <LogOut className="h-4 w-4" />
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>

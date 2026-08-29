@@ -15,8 +15,8 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
       className="mb-4 flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="min-w-0">
-        <h1 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">{title}</h1>
-        {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
+        {description && <p className="mt-0.5 text-sm font-normal text-muted-foreground">{description}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </motion.div>
