@@ -29,6 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import TableActions from '@/components/shared/TableActions'
 import { useRemoteData } from '@/hooks/useRemoteData'
 import { chartTheme, formatCompact, formatCurrency } from '@/lib/dashboardChart'
+import { exportAdminReport } from '@/lib/exportReport'
 import { listPendingContributions } from '@/services/contributionService'
 import { getAdminDashboard } from '@/services/fundService'
 import { listMembers } from '@/services/memberService'
@@ -132,7 +133,13 @@ export default function AdminDashboardPage() {
             aria-label="Target month"
             className="h-10 rounded-lg bg-card px-3 text-sm shadow-sm outline-none focus:ring-3 focus:ring-primary/20"
           />
-          <Button className="h-10">
+          <Button
+            className="h-10"
+            onClick={() => {
+              if (!dashboard.data) return
+              exportAdminReport(dashboard.data, { targetMonth })
+            }}
+          >
             <Download className="h-4 w-4" />
             Export report
           </Button>
@@ -141,7 +148,12 @@ export default function AdminDashboardPage() {
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map(({ label, value, note, icon: Icon, context, tone, to }) => (
-          <button key={label} type="button" onClick={() => navigate(to)} className="text-left">
+          <button
+            key={label}
+            type="button"
+            onClick={() => navigate(to)}
+            className="text-left"
+          >
             <Card className="group h-full overflow-hidden shadow-card transition-all hover:-translate-y-0.5 hover:shadow-soft">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">

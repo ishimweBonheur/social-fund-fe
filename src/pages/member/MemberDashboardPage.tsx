@@ -113,7 +113,11 @@ export default function MemberDashboardPage() {
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map(({ label, value, note, icon: Icon, tone, to }) => (
-          <Link key={label} to={to} className="block">
+          <Link
+            key={label}
+            to={to}
+            className="block"
+          >
             <Card className="h-full shadow-card transition-all hover:-translate-y-0.5 hover:shadow-soft">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
