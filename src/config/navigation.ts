@@ -21,7 +21,6 @@ export const navigation = {
     { to: '/admin/contributions', icon: WalletCards, label: 'Contributions' },
     { to: '/admin/loans', icon: HandCoins, label: 'Assistance Requests' },
     { to: '/admin/repayments', icon: ClipboardCheck, label: 'Fund Ledger' },
-    { to: '/admin/approvals', icon: ListChecks, label: 'Approvals' },
     { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
     { to: '/admin/audit-logs', icon: FileClock, label: 'Audit Logs' },
     { to: '/admin/monitoring', icon: Activity, label: 'System Monitoring' },

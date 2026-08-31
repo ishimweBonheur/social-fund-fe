@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import GoogleLoginButton from '@/components/forms/GoogleLoginButton'
 import { FinmLogo } from '@/components/shared/FinmLogo'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { dashboardFor } from '@/config/navigation'
 import { useApp } from '@/context/AppContext'
@@ -35,8 +36,9 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-background p-4">
-      <Card className="w-full max-w-sm">
+    <main className="relative grid min-h-screen place-items-center bg-background p-4">
+      <ThemeToggle className="absolute right-5 top-5 border border-border/70 bg-card shadow-sm" />
+      <Card className="w-full max-w-sm shadow-card">
         <CardHeader>
           <FinmLogo />
           <CardTitle className="pt-4">Welcome back</CardTitle>
@@ -48,7 +50,7 @@ export default function LoginPage() {
           {error && (
             <p
               role="alert"
-              className="rounded-xl bg-red-50 p-3 text-sm text-red-700"
+              className="rounded-lg border border-red-200/70 bg-red-50 p-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
             >
               {error}
             </p>

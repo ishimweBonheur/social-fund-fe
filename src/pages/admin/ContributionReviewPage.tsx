@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   approveContribution,
   rejectContribution,
@@ -96,9 +97,10 @@ export default function ContributionReviewPage() {
             {action === 'reject' && (
               <div>
                 <Label htmlFor="review-reason">Rejection reason *</Label>
-                <textarea
+                <Textarea
                   id="review-reason"
-                  className="mt-1 min-h-28 w-full rounded-xl border bg-card p-3 text-sm"
+                  className="min-h-28"
+                  placeholder="Explain why this contribution is being rejected"
                   value={reason}
                   onChange={(event) => setReason(event.target.value)}
                 />

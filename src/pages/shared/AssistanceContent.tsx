@@ -1,7 +1,9 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
+import { HandCoins, RotateCcw, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import DetailDialog from '@/components/shared/DetailDialog'
 import EmptyState from '@/components/shared/EmptyState'
+import FilterDialog from '@/components/shared/FilterDialog'
 import SupportRequestDialog from '@/components/shared/SupportRequestDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
 import StatusBadge from '@/components/shared/StatusBadge'
@@ -18,6 +20,14 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -27,6 +37,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useRemoteData } from '@/hooks/useRemoteData'
+import { formatPersonName } from '@/lib/utils'
 import { getApiErrorMessage } from '@/services/api'
 import {
   approveAssistanceRequest,
@@ -48,6 +59,8 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
   const [mode, setMode] = useState<Mode>()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
   const [form, setForm] = useState({
     amount: '',
     reason: '',
@@ -118,7 +131,20 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
       setBusy(false)
     }
   }
-  const items = remote.data ?? []
+  const items = useMemo(() => remote.data ?? [], [remote.data])
+  const statuses = useMemo(() => [...new Set(items.map((item) => item.status))].sort(), [items])
+  const filteredItems = useMemo(
+    () =>
+      items.filter(
+        (item) =>
+          (statusFilter === 'ALL' || item.status === statusFilter) &&
+          (!search ||
+            [item.memberName, item.reason, item.status].some((value) =>
+              value?.toLowerCase().includes(search.toLowerCase()),
+            )),
+      ),
+    [items, search, statusFilter],
+  )
   return (
     <div>
       <PageHeader
@@ -169,8 +195,66 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
           }
         />
       ) : (
-        <Card>
-          <CardContent className="overflow-x-auto p-0">
+        <Card className="overflow-hidden border-border/70 shadow-card">
+          <div className="border-b border-border/60 p-4 sm:p-5">
+            <div className="mb-4">
+              <p className="text-base font-bold">Assistance directory</p>
+              <p className="text-xs text-muted-foreground">
+                {filteredItems.length} of {items.length} requests
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="relative min-w-0 flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="pl-10"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search member or reason..."
+                />
+              </div>
+              <FilterDialog
+                activeCount={statusFilter === 'ALL' ? 0 : 1}
+                onReset={() => setStatusFilter('ALL')}
+                title="Filter assistance requests"
+              >
+                <div>
+                  <p className="mb-2 text-xs font-semibold">Request status</p>
+                  <Select
+                    value={statusFilter}
+                    onValueChange={setStatusFilter}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All statuses</SelectItem>
+                      {statuses.map((status) => (
+                        <SelectItem
+                          key={status}
+                          value={status}
+                        >
+                          {status.replaceAll('_', ' ')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </FilterDialog>
+              {search && (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setSearch('')
+                  }}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Reset
+                </Button>
+              )}
+            </div>
+          </div>
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -183,9 +267,9 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => (
+                {filteredItems.map((item) => (
                   <TableRow key={item.id}>
-                    {admin && <TableCell>{item.memberName}</TableCell>}
+                    {admin && <TableCell>{formatPersonName(item.memberName)}</TableCell>}
                     <TableCell>{money(item.amountRequested)}</TableCell>
                     <TableCell>{item.reason}</TableCell>
                     <TableCell>{money(item.amountApproved)}</TableCell>
@@ -282,25 +366,30 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
           if (!value) setMode(undefined)
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-w-xl">
           <form onSubmit={submit}>
-            <DialogHeader>
-              <DialogTitle>
-                {mode === 'create'
-                  ? 'Request Assistance'
-                  : mode === 'approve'
-                    ? 'Approve Assistance Request'
-                    : mode === 'reject'
-                      ? 'Reject Assistance Request'
-                      : 'Record Assistance Payment'}
-              </DialogTitle>
-              <DialogDescription>
-                {mode === 'create'
-                  ? 'Submit a request for Social Fund assistance.'
-                  : `${target?.memberName ?? 'Member'} requested ${money(target?.amountRequested)}.`}
-              </DialogDescription>
+            <DialogHeader className="flex flex-row items-start gap-3 border-b-0 pb-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-accent text-primary">
+                <HandCoins className="h-5 w-5" />
+              </span>
+              <div>
+                <DialogTitle>
+                  {mode === 'create'
+                    ? 'Request Assistance'
+                    : mode === 'approve'
+                      ? 'Approve Assistance Request'
+                      : mode === 'reject'
+                        ? 'Reject Assistance Request'
+                        : 'Record Assistance Payment'}
+                </DialogTitle>
+                <DialogDescription>
+                  {mode === 'create'
+                    ? 'Submit a request for Social Fund assistance.'
+                    : `${target?.memberName ?? 'Member'} requested ${money(target?.amountRequested)}.`}
+                </DialogDescription>
+              </div>
             </DialogHeader>
-            <div className="grid gap-4 px-6 py-5">
+            <div className="grid gap-5 px-6 py-5">
               {mode !== 'reject' && (
                 <div>
                   <Label htmlFor="assistance-amount">
@@ -324,9 +413,11 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
               {(mode === 'create' || mode === 'reject') && (
                 <div>
                   <Label htmlFor="assistance-reason">Reason *</Label>
-                  <textarea
+                  <Textarea
                     id="assistance-reason"
-                    className="mt-1 min-h-24 w-full rounded-xl border bg-card p-3 text-sm"
+                    required
+                    maxLength={500}
+                    placeholder="Briefly explain why you need assistance"
                     value={form.reason}
                     onChange={(event) => setForm({ ...form, reason: event.target.value })}
                   />
@@ -335,9 +426,11 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
               {mode === 'create' && (
                 <div>
                   <Label htmlFor="assistance-description">Description</Label>
-                  <textarea
+                  <Textarea
                     id="assistance-description"
-                    className="mt-1 min-h-24 w-full rounded-xl border bg-card p-3 text-sm"
+                    className="min-h-28"
+                    maxLength={2000}
+                    placeholder="Add any helpful context or supporting details"
                     value={form.description}
                     onChange={(event) => setForm({ ...form, description: event.target.value })}
                   />

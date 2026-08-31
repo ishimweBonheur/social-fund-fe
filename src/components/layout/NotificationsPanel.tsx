@@ -19,7 +19,7 @@ export function NotificationsPanel() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-8 w-8 rounded-full"
+          className="relative h-8 w-8 rounded-md"
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (

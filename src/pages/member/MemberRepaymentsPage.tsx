@@ -1,12 +1,21 @@
 import { useCallback, useState } from 'react'
+import { Download } from 'lucide-react'
 import DetailDialog from '@/components/shared/DetailDialog'
 import EmptyState from '@/components/shared/EmptyState'
+import FilterDialog from '@/components/shared/FilterDialog'
 import Pagination from '@/components/shared/Pagination'
 import { PageHeader } from '@/components/shared/PageHeader'
 import TableActions from '@/components/shared/TableActions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -16,6 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useRemoteData } from '@/hooks/useRemoteData'
+import { humanizeValue } from '@/lib/utils'
 import {
   downloadStatement,
   getMemberFundSummary,
@@ -45,10 +55,11 @@ export default function MemberRepaymentsPage() {
         description="Track completed contributions and assistance received"
         action={
           <Button
-            variant="outline"
+            className="gap-2 shadow-sm"
             onClick={() => void downloadStatement(false, filters)}
           >
-            Download Styled PDF
+            <Download className="size-4" />
+            Download PDF
           </Button>
         }
       />
@@ -66,28 +77,49 @@ export default function MemberRepaymentsPage() {
           </Card>
         ))}
       </div>
-      <div className="mb-3 grid gap-2 sm:grid-cols-3">
-        <select
-          className="h-10 rounded-xl border bg-card px-3 text-sm"
-          value={filters.type ?? ''}
-          onChange={(event) => updateFilters({ ...filters, type: event.target.value })}
+      <div className="mb-3 flex justify-end">
+        <FilterDialog
+          activeCount={Object.values(filters).filter(Boolean).length}
+          onReset={() => updateFilters({})}
+          title="Filter transactions"
         >
-          <option value="">All transaction types</option>
-          <option value="CONTRIBUTION">Contributions</option>
-          <option value="ASSISTANCE">Assistance received</option>
-        </select>
-        <Input
-          type="date"
-          aria-label="From date"
-          value={filters.dateFrom ?? ''}
-          onChange={(event) => updateFilters({ ...filters, dateFrom: event.target.value })}
-        />
-        <Input
-          type="date"
-          aria-label="To date"
-          value={filters.dateTo ?? ''}
-          onChange={(event) => updateFilters({ ...filters, dateTo: event.target.value })}
-        />
+          <div>
+            <p className="mb-2 text-xs font-semibold">Transaction type</p>
+            <Select
+              value={filters.type || 'ALL'}
+              onValueChange={(value) =>
+                updateFilters({ ...filters, type: value === 'ALL' ? '' : value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All transaction types</SelectItem>
+                <SelectItem value="CONTRIBUTION">Contributions</SelectItem>
+                <SelectItem value="ASSISTANCE">Assistance received</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-semibold">From date</p>
+            <Input
+              type="date"
+              aria-label="From date"
+              value={filters.dateFrom ?? ''}
+              onChange={(event) => updateFilters({ ...filters, dateFrom: event.target.value })}
+            />
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-semibold">To date</p>
+            <Input
+              type="date"
+              aria-label="To date"
+              value={filters.dateTo ?? ''}
+              onChange={(event) => updateFilters({ ...filters, dateTo: event.target.value })}
+            />
+          </div>
+        </FilterDialog>
       </div>
       {transactions.error || summary.error ? (
         <EmptyState
@@ -137,9 +169,11 @@ export default function MemberRepaymentsPage() {
                       {item.type === 'ASSISTANCE' ? 'Assistance received' : 'Contribution paid'}
                     </TableCell>
                     <TableCell>{money(item.amount)}</TableCell>
-                    <TableCell>{item.paymentMethod ?? '-'}</TableCell>
+                    <TableCell>
+                      {item.paymentMethod ? humanizeValue(item.paymentMethod) : '—'}
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{item.reference ?? '-'}</TableCell>
-                    <TableCell>{item.status}</TableCell>
+                    <TableCell>{humanizeValue(item.status)}</TableCell>
                     <TableCell>
                       <TableActions
                         actions={[{ label: 'View Details', onSelect: () => setSelected(item) }]}
@@ -167,7 +201,6 @@ export default function MemberRepaymentsPage() {
         items={
           selected
             ? [
-                { label: 'Transaction ID', value: selected.id },
                 { label: 'Type', value: selected.type },
                 { label: 'Direction', value: selected.direction },
                 { label: 'Amount', value: money(selected.amount) },

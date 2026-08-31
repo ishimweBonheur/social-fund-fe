@@ -1,4 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card'
+import type { ReactNode } from 'react'
+import { humanizeValue } from '@/lib/utils'
 import StatusBadge from '@/components/shared/StatusBadge'
 import TableActions, { type TableAction } from '@/components/shared/TableActions'
 import {
@@ -30,14 +32,33 @@ export function FundTable({
   columns,
   rows,
   actions,
+  title,
+  description,
+  toolbar,
+  footer,
 }: {
   columns: string[]
   rows: string[][]
   actions?: (row: string[], index: number) => TableAction[]
+  title?: string
+  description?: string
+  toolbar?: ReactNode
+  footer?: ReactNode
 }) {
   return (
-    <Card>
-      <CardContent className="overflow-x-auto p-0">
+    <Card className="overflow-hidden border-border/70 shadow-card">
+      {(title || toolbar) && (
+        <div className="border-b border-border/60 p-4 sm:p-5">
+          {title && (
+            <div className="mb-4">
+              <p className="text-base font-bold">{title}</p>
+              {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+            </div>
+          )}
+          {toolbar}
+        </div>
+      )}
+      <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
@@ -58,9 +79,17 @@ export function FundTable({
                 {row.map((cell, index) => (
                   <TableCell
                     key={`${cell}-${index}`}
-                    className="whitespace-nowrap"
+                    className={
+                      index === 0
+                        ? 'whitespace-nowrap font-semibold text-foreground'
+                        : 'whitespace-nowrap text-muted-foreground'
+                    }
                   >
-                    {statuses.has(cell.toUpperCase()) ? <StatusBadge status={cell} /> : cell}
+                    {statuses.has(cell.toUpperCase()) ? (
+                      <StatusBadge status={cell} />
+                    ) : (
+                      humanizeValue(cell)
+                    )}
                   </TableCell>
                 ))}
                 {actions && (
@@ -73,6 +102,7 @@ export function FundTable({
           </TableBody>
         </Table>
       </CardContent>
+      {footer}
     </Card>
   )
 }

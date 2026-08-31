@@ -16,13 +16,11 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen overflow-x-clip bg-background">
-      {/* Fixed desktop sidebar rail (shown on md and up) */}
       <div
         className={cn(
-          'fixed bottom-3 left-2 z-40 hidden overflow-visible transition-[width] duration-200 sm:left-3 md:block',
-          sidebarExpanded ? 'w-60' : 'w-14 sm:w-16',
+          'fixed bottom-0 left-0 top-0 z-40 hidden overflow-visible border-r border-white/7 bg-[#12121a] transition-[width] duration-200 md:block',
+          sidebarExpanded ? 'w-60' : 'w-[4.5rem]',
         )}
-        style={{ top: '3.5rem' }}
       >
         <Sidebar
           expanded={sidebarExpanded}
@@ -30,11 +28,10 @@ export function AppLayout() {
         />
       </div>
 
-      {/* Fixed top navigation bar */}
       <div
         className={cn(
-          'fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md transition-[left] duration-200',
-          sidebarExpanded ? 'md:left-64' : 'md:left-20',
+          'fixed inset-x-0 top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur-xl transition-[left] duration-200',
+          sidebarExpanded ? 'md:left-60' : 'md:left-[4.5rem]',
         )}
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
@@ -46,11 +43,11 @@ export function AppLayout() {
       {/* Main content: padded so the fixed bars never cover it */}
       <main
         className={cn(
-          'px-2 pb-[calc(4.75rem+env(safe-area-inset-bottom))] pt-[calc(4.5rem+env(safe-area-inset-top))] transition-[padding] duration-200 sm:px-3 sm:pt-[calc(4.75rem+env(safe-area-inset-top))] md:pb-4 md:pr-3 md:pt-[calc(4.5rem+env(safe-area-inset-top))]',
-          sidebarExpanded ? 'md:pl-64' : 'md:pl-20',
+          'px-3 pb-[calc(4.75rem+env(safe-area-inset-bottom))] pt-[calc(5rem+env(safe-area-inset-top))] transition-[padding] duration-200 sm:px-5 md:pb-8 md:pr-6 md:pt-[calc(5.5rem+env(safe-area-inset-top))]',
+          sidebarExpanded ? 'md:pl-[16.5rem]' : 'md:pl-[6rem]',
         )}
       >
-        <div className="mx-auto w-full min-w-0 ">
+        <div className="mx-auto w-full min-w-0 max-w-[1600px]">
           <Outlet />
         </div>
       </main>

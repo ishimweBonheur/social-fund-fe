@@ -10,6 +10,12 @@ interface AuditDto {
   IPAddress?: string
   UserAgent?: string
   CreatedAt: string
+  ip_address?: string
+  user_agent?: string
+  created_at?: string
+  ipAddress?: string
+  userAgent?: string
+  createdAt?: string
 }
 export interface AuditRecord {
   id: string
@@ -52,8 +58,8 @@ export async function listAuditLogs(
     entityId: value.EntityID,
     oldData: value.OldData,
     newData: value.NewData,
-    ipAddress: value.IPAddress,
-    userAgent: value.UserAgent,
-    createdAt: value.CreatedAt,
+    ipAddress: value.IPAddress ?? value.ip_address ?? value.ipAddress,
+    userAgent: value.UserAgent ?? value.user_agent ?? value.userAgent,
+    createdAt: value.CreatedAt ?? value.created_at ?? value.createdAt ?? '',
   }))
 }

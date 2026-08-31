@@ -46,6 +46,7 @@ export interface Contribution {
   paymentDate?: string
   paymentMethod?: string
   transactionReference?: string
+  proofUrl?: string
   proofUploadedAt?: string
   status: ContributionStatus
   rejectionReason?: string
@@ -64,6 +65,7 @@ const map = (value: ContributionDto): Contribution => ({
   paymentDate: value.PaymentDate,
   paymentMethod: value.PaymentMethod,
   transactionReference: value.TransactionReference,
+  proofUrl: value.ProofURL,
   proofUploadedAt: value.ProofUploadedAt,
   status: value.Status,
   rejectionReason: value.RejectionReason,
@@ -124,21 +126,62 @@ export async function submitContributionProof(
   })
 }
 export async function getContributionProof(id: string) {
-  const { data } = await apiClient.get<ApiEnvelope<{ url: string; expires_in: number }>>(
-    `/contributions/${id}/proof`,
-  )
+  const { data } = await apiClient.get<
+    ApiEnvelope<{
+      url?: string
+      URL?: string
+      proof_url?: string
+      ProofURL?: string
+      expires_in?: number
+      ExpiresIn?: number
+    }>
+  >(`/contributions/${id}/proof`)
+  const suppliedUrl = data.data.url ?? data.data.URL ?? data.data.proof_url ?? data.data.ProofURL
+  if (!suppliedUrl) throw new Error('The uploaded proof file is not available.')
+
   const apiBase = new URL(apiClient.defaults.baseURL || '/api/v1', window.location.origin)
-  const proofURL = new URL(data.data.url, apiBase.origin).toString()
-  let blob: Blob
-  if (new URL(proofURL).origin === apiBase.origin) {
-    const proof = await apiClient.get<Blob>(proofURL, { responseType: 'blob' })
-    blob = proof.data
-  } else {
-    const proof = await fetch(proofURL)
-    if (!proof.ok) throw new Error('Unable to download contribution proof.')
-    blob = await proof.blob()
+  const proofUrl = new URL(suppliedUrl, apiBase.origin).toString()
+  const suppliedProofUrl = new URL(proofUrl)
+  const isManagedUpload = suppliedProofUrl.pathname.startsWith('/uploads/')
+
+  // Signed storage links should be opened directly. Fetching them first can be
+  // rejected by the storage provider's CORS policy even when the link is valid.
+  if (suppliedProofUrl.origin !== apiBase.origin && !isManagedUpload) {
+    return {
+      url: proofUrl,
+      expiresIn: data.data.expires_in ?? data.data.ExpiresIn,
+      objectUrl: false,
+    }
   }
-  return { url: URL.createObjectURL(blob), expiresIn: data.data.expires_in }
+
+  const candidates = [proofUrl]
+  const apiPath = apiBase.pathname.replace(/\/$/, '')
+  const suppliedPath = suppliedProofUrl.pathname
+  if (!suppliedPath.startsWith(`${apiPath}/`)) {
+    candidates.push(
+      new URL(`${apiPath}/${suppliedPath.replace(/^\//, '')}`, suppliedProofUrl.origin).toString(),
+    )
+  }
+
+  for (const candidate of candidates) {
+    try {
+      const proof = await apiClient.get<Blob>(candidate, { responseType: 'blob' })
+      if (!proof.data.type.includes('json')) {
+        return {
+          url: URL.createObjectURL(proof.data),
+          expiresIn: data.data.expires_in ?? data.data.ExpiresIn,
+          objectUrl: true,
+        }
+      }
+    } catch {
+      // Some backends expose uploaded files at the API prefix while others use
+      // the server root. Continue through the compatible candidates.
+    }
+  }
+
+  throw new Error(
+    'The payment proof file could not be found on the server. Please upload it again.',
+  )
 }
 export async function approveContribution(id: string, notes?: string) {
   await apiClient.post(`/contributions/${id}/approve`, { notes: notes || undefined })

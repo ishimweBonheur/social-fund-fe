@@ -1,12 +1,21 @@
 import { useMemo, useState } from 'react'
-import { Search } from 'lucide-react'
+import { RotateCcw, Search } from 'lucide-react'
 import DetailDialog from '@/components/shared/DetailDialog'
 import EmptyState from '@/components/shared/EmptyState'
+import FilterDialog from '@/components/shared/FilterDialog'
 import { FundTable } from '@/components/shared/FundTable'
 import { PageHeader } from '@/components/shared/PageHeader'
+import Pagination from '@/components/shared/Pagination'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useRemoteData } from '@/hooks/useRemoteData'
 
 interface DataPageProps {
@@ -30,16 +39,37 @@ export default function DataPage({
   const remote = useRemoteData(loader ?? emptyLoader)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [columnFilters, setColumnFilters] = useState<Record<number, string>>({})
   const [selected, setSelected] = useState<string[]>()
+  const sourceRows = useMemo(() => rows ?? remote.data ?? [], [rows, remote.data])
+  const filterColumns = useMemo(
+    () =>
+      columns
+        .map((column, index) => ({
+          column,
+          index,
+          values: [...new Set(sourceRows.map((row) => row[index]).filter(Boolean))].sort(),
+        }))
+        .filter(
+          ({ column, values }) =>
+            /status|type|direction|frequency|method|role|audience|category/i.test(column) &&
+            values.length > 1 &&
+            values.length <= 20,
+        ),
+    [columns, sourceRows],
+  )
   const filtered = useMemo(
     () =>
-      (rows ?? remote.data ?? []).filter((row) =>
-        row.some((cell) => cell.toLowerCase().includes(search.toLowerCase())),
+      sourceRows.filter(
+        (row) =>
+          row.some((cell) => cell.toLowerCase().includes(search.toLowerCase())) &&
+          Object.entries(columnFilters).every(
+            ([index, value]) => !value || row[Number(index)] === value,
+          ),
       ),
-    [rows, remote.data, search],
+    [sourceRows, search, columnFilters],
   )
-  const pageSize = 10
-  const pages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const displayedRows = filtered.slice((page - 1) * pageSize, page * pageSize)
   const details =
     selected?.map((value, index) => ({
@@ -48,23 +78,28 @@ export default function DataPage({
       status: columns[index]?.toLowerCase() === 'status',
     })) ?? []
   return (
-    <div>
+    <div className="min-w-0 space-y-5">
       <PageHeader
         title={title}
         description={description}
       />
       {searchable && !remote.error && (
-        <div className="relative mb-3 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="pl-9"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value)
-              setPage(1)
-            }}
-            placeholder={`Search ${title.toLowerCase()}…`}
-          />
+        <div className="hidden">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              className="h-10 pl-10"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value)
+                setPage(1)
+              }}
+              placeholder={`Search ${title.toLowerCase()}…`}
+            />
+          </div>
+          <p className="hidden text-xs font-medium text-muted-foreground sm:block">
+            {filtered.length} records
+          </p>
         </div>
       )}
       {loader && remote.isLoading ? (
@@ -120,31 +155,92 @@ export default function DataPage({
             columns={columns}
             rows={displayedRows}
             actions={(row) => [{ label: 'View Details', onSelect: () => setSelected(row) }]}
+            title={title}
+            description={`${filtered.length} records`}
+            toolbar={
+              searchable ? (
+                <div className="flex flex-col gap-2 lg:flex-row">
+                  <div className="relative min-w-0 flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      className="h-10 pl-10"
+                      value={search}
+                      onChange={(event) => {
+                        setSearch(event.target.value)
+                        setPage(1)
+                      }}
+                      placeholder={`Search ${title.toLowerCase()}...`}
+                    />
+                  </div>
+                  {filterColumns.length > 0 && (
+                    <FilterDialog
+                      activeCount={Object.values(columnFilters).filter(Boolean).length}
+                      onReset={() => {
+                        setColumnFilters({})
+                        setPage(1)
+                      }}
+                      title={`Filter ${title.toLowerCase()}`}
+                    >
+                      {filterColumns.map(({ column, index, values }) => (
+                        <div key={column}>
+                          <p className="mb-2 text-xs font-semibold">{column}</p>
+                          <Select
+                            value={columnFilters[index] || 'ALL'}
+                            onValueChange={(value) => {
+                              setColumnFilters((current) => ({
+                                ...current,
+                                [index]: value === 'ALL' ? '' : value,
+                              }))
+                              setPage(1)
+                            }}
+                          >
+                            <SelectTrigger className="min-w-36">
+                              <SelectValue placeholder={`All ${column.toLowerCase()}`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ALL">All {column.toLowerCase()}</SelectItem>
+                              {values.map((value) => (
+                                <SelectItem
+                                  key={value}
+                                  value={value}
+                                >
+                                  {value.replaceAll('_', ' ')}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ))}
+                    </FilterDialog>
+                  )}
+                  {search && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setSearch('')
+                        setPage(1)
+                      }}
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      Reset
+                    </Button>
+                  )}
+                </div>
+              ) : undefined
+            }
+            footer={
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                total={filtered.length}
+                onPageChange={setPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size)
+                  setPage(1)
+                }}
+              />
+            }
           />
-          <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of{' '}
-              {filtered.length}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={page === 1}
-                onClick={() => setPage((value) => value - 1)}
-              >
-                Previous
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={page === pages}
-                onClick={() => setPage((value) => value + 1)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
         </>
       )}
       <DetailDialog

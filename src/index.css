@@ -3,45 +3,47 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: #F5F7F8;
-  --color-foreground: #111827;
+  --color-background: #f6f7fb;
+  --color-foreground: #17172a;
   --color-card: #FFFFFF;
-  --color-card-foreground: #111827;
-  --color-muted: #F3F4F6;
-  --color-muted-foreground: #6B7280;
-  --color-border: #E5E7EB;
-  --color-primary: #0F9D58;
+  --color-card-foreground: #17172a;
+  --color-muted: #f0f1f7;
+  --color-muted-foreground: #717184;
+  --color-border: #e4e5ec;
+  --color-surface-raised: #ffffff;
+  --color-primary: #6957e8;
   --color-primary-foreground: #FFFFFF;
-  --color-secondary: #16A34A;
-  --color-accent: #ECFDF5;
-  --color-accent-foreground: #0F9D58;
-  --color-destructive: #EF4444;
-  --color-ring: #0F9D58;
+  --color-secondary: #f2a93b;
+  --color-accent: #efedff;
+  --color-accent-foreground: #5745d2;
+  --color-destructive: #ed5d71;
+  --color-ring: #6957e8;
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
   --radius-2xl: 1.5rem;
   --radius-3xl: 2rem;
-  --font-sans: 'Geist Variable', Geist, ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Manrope Variable', Manrope, ui-sans-serif, system-ui, sans-serif;
   --shadow-soft: 0 4px 24px -4px rgba(0, 0, 0, 0.06), 0 2px 8px -2px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 24px -6px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 1px 2px rgba(23, 23, 42, 0.03), 0 12px 32px -12px rgba(65, 54, 139, 0.12);
 }
 
 .dark {
-  --color-background: #0F1419;
-  --color-foreground: #F9FAFB;
-  --color-card: #1A2332;
-  --color-card-foreground: #F9FAFB;
-  --color-muted: #243044;
-  --color-muted-foreground: #9CA3AF;
-  --color-border: #2D3A4F;
-  --color-primary: #22C55E;
+  --color-background: #0d0d17;
+  --color-foreground: #f5f3ff;
+  --color-card: #151522;
+  --color-card-foreground: #f5f3ff;
+  --color-muted: #202032;
+  --color-muted-foreground: #9695aa;
+  --color-border: #29293b;
+  --color-surface-raised: #1a1a29;
+  --color-primary: #8b7cf6;
   --color-primary-foreground: #FFFFFF;
-  --color-secondary: #16A34A;
-  --color-accent: #14532D;
-  --color-accent-foreground: #4ADE80;
-  --color-ring: #22C55E;
+  --color-secondary: #f4b955;
+  --color-accent: #292448;
+  --color-accent-foreground: #b9afff;
+  --color-ring: #8b7cf6;
   --shadow-soft: 0 4px 24px -4px rgba(0, 0, 0, 0.3), 0 2px 8px -2px rgba(0, 0, 0, 0.2);
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 8px 24px -6px rgba(0, 0, 0, 0.3);
 }
@@ -53,6 +55,7 @@
 
   html {
     font-family: var(--font-sans);
+    color-scheme: light;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -63,6 +66,89 @@
     min-height: 100vh;
     overflow-x: hidden;
     overflow-x: clip;
+    background-image: radial-gradient(circle at 72% -10%, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 30rem);
+    transition: background-color 180ms ease, color 180ms ease;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html.dark body {
+    background-image:
+      radial-gradient(circle at 70% -8%, color-mix(in srgb, var(--color-primary) 15%, transparent), transparent 34rem),
+      radial-gradient(circle at 8% 92%, rgba(59, 130, 246, 0.06), transparent 28rem);
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-primary) 28%, transparent);
+    color: var(--color-foreground);
+  }
+
+  * {
+    scrollbar-color: color-mix(in srgb, var(--color-muted-foreground) 45%, transparent) transparent;
+  }
+
+  select,
+  textarea {
+    border: 1px solid var(--color-border) !important;
+    border-radius: 0.5rem !important;
+    background-color: var(--color-card) !important;
+    color: var(--color-foreground);
+    box-shadow: 0 1px 2px rgba(20, 20, 40, 0.03);
+    outline: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  }
+
+  select:focus,
+  textarea:focus {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 10%, transparent);
+  }
+
+  option {
+    background: var(--color-card);
+    color: var(--color-foreground);
+  }
+
+  select {
+    min-height: 2.5rem;
+    padding: 0.5rem 2.25rem 0.5rem 0.75rem !important;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 6.5rem;
+    padding: 0.75rem !important;
+    line-height: 1.5;
+    resize: vertical;
+  }
+
+  html:not(.dark) textarea {
+    background-color: #ffffff !important;
+    color: #17172a !important;
+  }
+
+  html.dark textarea {
+    background-color: #151522 !important;
+    color: #f5f3ff !important;
+  }
+
+  input[type='checkbox'] {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+    accent-color: var(--color-primary);
+  }
+
+  input[type='checkbox']:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
+    outline-offset: 2px;
+  }
+
+  html.dark input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.7;
   }
 }
 

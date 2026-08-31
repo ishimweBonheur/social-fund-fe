@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import ContributionPaymentCard from '@/components/member/ContributionPaymentCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import DetailDialog from '@/components/shared/DetailDialog'
 import EmptyState from '@/components/shared/EmptyState'
+import FilterDialog from '@/components/shared/FilterDialog'
 import SupportRequestDialog from '@/components/shared/SupportRequestDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
 import StatusBadge from '@/components/shared/StatusBadge'
@@ -21,6 +22,14 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -30,6 +39,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useRemoteData } from '@/hooks/useRemoteData'
+import { formatPersonName } from '@/lib/utils'
 import { getApiErrorMessage } from '@/services/api'
 import {
   approveContribution,
@@ -71,14 +81,24 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<'ALL' | ContributionStatus>('ALL')
   const [page, setPage] = useState(1)
+  const [dueFrom, setDueFrom] = useState('')
+  const [dueTo, setDueTo] = useState('')
+  const [method, setMethod] = useState('ALL')
+  const [proof, setProof] = useState<'ALL' | 'WITH' | 'WITHOUT'>('ALL')
+  const [paymentState, setPaymentState] = useState<'ALL' | 'PAID' | 'PARTIAL' | 'UNPAID'>('ALL')
+  const [lateFee, setLateFee] = useState<'ALL' | 'WITH' | 'WITHOUT'>('ALL')
+  const [reference, setReference] = useState<'ALL' | 'WITH' | 'WITHOUT'>('ALL')
+  const [paidFrom, setPaidFrom] = useState('')
+  const [paidTo, setPaidTo] = useState('')
+  const [amountMin, setAmountMin] = useState('')
+  const [amountMax, setAmountMax] = useState('')
   const loader = useCallback(
     async () =>
       admin
         ? listAdminContributions({
             search,
-            status: status === 'ALL' ? undefined : status,
-            page,
-            pageSize: 10,
+            page: 1,
+            pageSize: 100,
           })
         : (() =>
             listMyContributions().then((items) => ({
@@ -87,7 +107,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
               page: 1,
               pageSize: 100,
             })))(),
-    [admin, search, status, page],
+    [admin, search],
   )
   const remote = useRemoteData(loader)
   const [selected, setSelected] = useState<Contribution>()
@@ -104,7 +124,87 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
   })
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState('')
-  const items = remote.data?.items ?? []
+  const items = useMemo(() => remote.data?.items ?? [], [remote.data])
+  const methods = useMemo(
+    () =>
+      [
+        ...new Set(
+          items
+            .map((item) => item.paymentMethod)
+            .filter((value): value is string => Boolean(value)),
+        ),
+      ].sort(),
+    [items],
+  )
+  const filteredItems = useMemo(
+    () =>
+      items.filter((item) => {
+        const amount = Number(item.totalDue)
+        const due = item.dueDate.slice(0, 10)
+        const paid = Number(item.paidAmount || 0)
+        const completion = paid <= 0 ? 'UNPAID' : paid < amount ? 'PARTIAL' : 'PAID'
+        const paidDate = item.paymentDate?.slice(0, 10) || ''
+        return (
+          (status === 'ALL' || item.status === status) &&
+          (!dueFrom || due >= dueFrom) &&
+          (!dueTo || due <= dueTo) &&
+          (method === 'ALL' || item.paymentMethod === method) &&
+          (proof === 'ALL' || Boolean(item.proofUploadedAt) === (proof === 'WITH')) &&
+          (paymentState === 'ALL' || completion === paymentState) &&
+          (lateFee === 'ALL' || Number(item.lateFeeAmount) > 0 === (lateFee === 'WITH')) &&
+          (reference === 'ALL' || Boolean(item.transactionReference) === (reference === 'WITH')) &&
+          (!paidFrom || (paidDate !== '' && paidDate >= paidFrom)) &&
+          (!paidTo || (paidDate !== '' && paidDate <= paidTo)) &&
+          (!amountMin || amount >= Number(amountMin)) &&
+          (!amountMax || amount <= Number(amountMax))
+        )
+      }),
+    [
+      items,
+      status,
+      dueFrom,
+      dueTo,
+      method,
+      proof,
+      paymentState,
+      lateFee,
+      reference,
+      paidFrom,
+      paidTo,
+      amountMin,
+      amountMax,
+    ],
+  )
+  const displayedItems = filteredItems.slice((page - 1) * 10, page * 10)
+  const filterCount = [
+    status !== 'ALL',
+    Boolean(dueFrom),
+    Boolean(dueTo),
+    method !== 'ALL',
+    proof !== 'ALL',
+    paymentState !== 'ALL',
+    lateFee !== 'ALL',
+    reference !== 'ALL',
+    Boolean(paidFrom),
+    Boolean(paidTo),
+    Boolean(amountMin),
+    Boolean(amountMax),
+  ].filter(Boolean).length
+  const resetFilters = () => {
+    setStatus('ALL')
+    setDueFrom('')
+    setDueTo('')
+    setMethod('ALL')
+    setProof('ALL')
+    setPaymentState('ALL')
+    setLateFee('ALL')
+    setReference('ALL')
+    setPaidFrom('')
+    setPaidTo('')
+    setAmountMin('')
+    setAmountMax('')
+    setPage(1)
+  }
   useEffect(() => {
     if (!selected?.id) return
     let active = true
@@ -163,14 +263,14 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
         link.target = '_blank'
         link.click()
       }
-      window.setTimeout(() => URL.revokeObjectURL(proof.url), 60_000)
+      if (proof.objectUrl) window.setTimeout(() => URL.revokeObjectURL(proof.url), 60_000)
     } catch (error) {
       tab?.close()
       toast.error(getApiErrorMessage(error))
     }
   }
   return (
-    <div>
+    <div className="min-w-0">
       <PageHeader
         title={admin ? 'Contributions' : 'My Contributions'}
         description={
@@ -181,7 +281,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
       />
       {!admin && <ContributionPaymentCard />}
       {!admin && <OutstandingSummary />}
-      <div className="mb-3 flex flex-wrap gap-2">
+      <div className="hidden">
         <Input
           className="max-w-sm"
           value={search}
@@ -193,7 +293,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
         />
         {admin && (
           <select
-            className="h-10 rounded-xl border bg-card px-3 text-sm"
+            className="h-10 px-3 text-sm"
             value={status}
             onChange={(event) => {
               setStatus(event.target.value as typeof status)
@@ -207,14 +307,6 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
           </select>
         )}
       </div>
-      {admin && (
-        <ServerPagination
-          page={page}
-          pageSize={10}
-          total={remote.data?.total ?? 0}
-          onPageChange={setPage}
-        />
-      )}
       {formError && (
         <p className="mb-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">{formError}</p>
       )}
@@ -244,7 +336,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
         </Card>
       )}
       {remote.isLoading ? (
-        <Card>
+        <Card className="overflow-hidden border-border/70 shadow-card">
           <CardContent className="space-y-3 p-4">
             {Array.from({ length: 5 }, (_, index) => (
               <div
@@ -279,8 +371,236 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
           }
         />
       ) : (
-        <Card>
-          <CardContent className="overflow-x-auto p-0">
+        <Card className="overflow-hidden border-border/70 shadow-card">
+          <div className="border-b border-border/60 p-4 sm:p-5">
+            <div className="mb-4">
+              <p className="text-base font-bold">
+                {admin ? 'Contribution directory' : 'Contribution history'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {filteredItems.length} of {items.length} records
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                className="h-10 flex-1"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value)
+                  setPage(1)
+                }}
+                placeholder="Search member or reference..."
+              />
+              {
+                <FilterDialog
+                  activeCount={filterCount}
+                  onReset={resetFilters}
+                  title="Filter contributions"
+                >
+                  <div>
+                    <p className="mb-2 text-xs font-semibold">Payment status</p>
+                    <Select
+                      value={status}
+                      onValueChange={(value) => {
+                        setStatus(value as typeof status)
+                        setPage(1)
+                      }}
+                    >
+                      <SelectTrigger className="min-w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">All statuses</SelectItem>
+                        {['UPCOMING', 'DUE', 'OVERDUE', 'PENDING', 'APPROVED', 'REJECTED'].map(
+                          (value) => (
+                            <SelectItem
+                              key={value}
+                              value={value}
+                            >
+                              {value}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold">Due from</p>
+                    <Input
+                      type="date"
+                      value={dueFrom}
+                      onChange={(event) => {
+                        setDueFrom(event.target.value)
+                        setPage(1)
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold">Due to</p>
+                    <Input
+                      type="date"
+                      value={dueTo}
+                      onChange={(event) => {
+                        setDueTo(event.target.value)
+                        setPage(1)
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold">Payment method</p>
+                    <Select
+                      value={method}
+                      onValueChange={(value) => {
+                        setMethod(value)
+                        setPage(1)
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">All methods</SelectItem>
+                        {methods.map((value) => (
+                          <SelectItem
+                            key={value}
+                            value={value}
+                          >
+                            {value.replaceAll('_', ' ')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold">Payment proof</p>
+                    <Select
+                      value={proof}
+                      onValueChange={(value) => {
+                        setProof(value as typeof proof)
+                        setPage(1)
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">With or without proof</SelectItem>
+                        <SelectItem value="WITH">Proof uploaded</SelectItem>
+                        <SelectItem value="WITHOUT">No proof uploaded</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold">Payment completion</p>
+                    <Select
+                      value={paymentState}
+                      onValueChange={(value) => {
+                        setPaymentState(value as typeof paymentState)
+                        setPage(1)
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">Any payment completion</SelectItem>
+                        <SelectItem value="PAID">Fully paid</SelectItem>
+                        <SelectItem value="PARTIAL">Partially paid</SelectItem>
+                        <SelectItem value="UNPAID">Unpaid</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold">Late fee</p>
+                    <Select
+                      value={lateFee}
+                      onValueChange={(value) => {
+                        setLateFee(value as typeof lateFee)
+                        setPage(1)
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">With or without late fee</SelectItem>
+                        <SelectItem value="WITH">Late fee applied</SelectItem>
+                        <SelectItem value="WITHOUT">No late fee</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold">Transaction reference</p>
+                    <Select
+                      value={reference}
+                      onValueChange={(value) => {
+                        setReference(value as typeof reference)
+                        setPage(1)
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">With or without reference</SelectItem>
+                        <SelectItem value="WITH">Reference available</SelectItem>
+                        <SelectItem value="WITHOUT">No reference</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold">Paid from</p>
+                    <Input
+                      type="date"
+                      value={paidFrom}
+                      onChange={(event) => {
+                        setPaidFrom(event.target.value)
+                        setPage(1)
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold">Paid to</p>
+                    <Input
+                      type="date"
+                      value={paidTo}
+                      onChange={(event) => {
+                        setPaidTo(event.target.value)
+                        setPage(1)
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold">Minimum total due</p>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="RWF 0"
+                      value={amountMin}
+                      onChange={(event) => {
+                        setAmountMin(event.target.value)
+                        setPage(1)
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-semibold">Maximum total due</p>
+                    <Input
+                      type="number"
+                      min="0"
+                      placeholder="No maximum"
+                      value={amountMax}
+                      onChange={(event) => {
+                        setAmountMax(event.target.value)
+                        setPage(1)
+                      }}
+                    />
+                  </div>
+                </FilterDialog>
+              }
+            </div>
+          </div>
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -294,9 +614,9 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => (
+                {displayedItems.map((item) => (
                   <TableRow key={item.id}>
-                    {admin && <TableCell>{item.memberName}</TableCell>}
+                    {admin && <TableCell>{formatPersonName(item.memberName)}</TableCell>}
                     <TableCell>{money(item.expectedAmount)}</TableCell>
                     <TableCell>{money(item.paidAmount)}</TableCell>
                     <TableCell>{new Date(item.dueDate).toLocaleDateString()}</TableCell>
@@ -308,7 +628,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
                       <TableActions
                         actions={[
                           { label: 'View Details', onSelect: () => setSelected(item) },
-                          ...(item.proofUploadedAt
+                          ...(item.proofUploadedAt || item.proofUrl
                             ? [{ label: 'View Proof', onSelect: () => void viewProof(item) }]
                             : []),
                           ...(admin && item.status === 'PENDING'
@@ -350,9 +670,27 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
                     </TableCell>
                   </TableRow>
                 ))}
+                {displayedItems.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={admin ? 7 : 6}
+                      className="py-12 text-center text-sm text-muted-foreground"
+                    >
+                      No contributions match the selected filters.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
+          {admin && (
+            <ServerPagination
+              page={page}
+              pageSize={10}
+              total={filteredItems.length}
+              onPageChange={setPage}
+            />
+          )}
         </Card>
       )}
       <DetailDialog
@@ -410,9 +748,9 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
           </DialogHeader>
           <div className="px-6 py-5">
             <Label htmlFor="rejection-reason">Reason *</Label>
-            <textarea
+            <Textarea
               id="rejection-reason"
-              className="mt-1 min-h-24 w-full rounded-xl border bg-card p-3 text-sm"
+              placeholder="Explain why this contribution is being rejected"
               value={reason}
               onChange={(event) => setReason(event.target.value)}
             />

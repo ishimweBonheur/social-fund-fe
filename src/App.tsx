@@ -5,7 +5,6 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import { dashboardFor } from '@/config/navigation'
 import { AppProvider, useApp } from '@/context/AppContext'
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage'
-import ApprovalsPage from '@/pages/admin/ApprovalsPage'
 import AuditLogsPage from '@/pages/admin/AuditLogsPage'
 import ContributionPlansPage from '@/pages/admin/ContributionPlansPage'
 import ContributionsPage from '@/pages/admin/ContributionsPage'
@@ -101,10 +100,6 @@ function AppRoutes() {
           <Route
             path="/admin/repayments"
             element={<RepaymentsPage />}
-          />
-          <Route
-            path="/admin/approvals"
-            element={<ApprovalsPage />}
           />
           <Route
             path="/admin/notifications"

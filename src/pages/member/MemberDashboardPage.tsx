@@ -1,68 +1,39 @@
 import { useCallback } from 'react'
 import {
+  Area,
+  AreaChart,
   CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
 import {
-  DashboardChartCard,
-  DashboardLoading,
-  DashboardTooltip,
-} from '@/components/dashboard/DashboardChart'
-import DashboardMetrics from '@/components/shared/DashboardMetrics'
-import { PageHeader } from '@/components/shared/PageHeader'
+  ArrowRight,
+  ArrowUpRight,
+  CalendarClock,
+  CheckCircle2,
+  CircleDollarSign,
+  Clock3,
+  HandCoins,
+  ReceiptText,
+  WalletCards,
+} from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { DashboardLoading, DashboardTooltip } from '@/components/dashboard/DashboardChart'
 import StatusBadge from '@/components/shared/StatusBadge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useApp } from '@/context/AppContext'
 import { useRemoteData } from '@/hooks/useRemoteData'
 import { chartTheme, formatCompact, formatCurrency } from '@/lib/dashboardChart'
+import { formatPersonName, humanizeValue } from '@/lib/utils'
 import { getMemberDashboard } from '@/services/fundService'
 
-const displayDate = (value?: string) => (value ? new Date(value).toLocaleDateString() : '—')
-const Detail = ({ label, value }: { label: string; value?: string }) => (
-  <div className="flex justify-between gap-4 border-b pb-3 text-sm last:border-0">
-    <span className="text-muted-foreground">{label}</span>
-    <strong className="text-right">{value ?? '—'}</strong>
-  </div>
-)
-const CountList = ({
-  title,
-  description,
-  items,
-  empty,
-}: {
-  title: string
-  description: string
-  items: Array<{ name: string; count: number }>
-  empty: string
-}) => (
-  <Card className="shadow-card">
-    <CardHeader>
-      <CardTitle>{title}</CardTitle>
-      <CardDescription>{description}</CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-2">
-      {items.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">{empty}</p>
-      ) : (
-        items.map((item) => (
-          <div
-            key={item.name}
-            className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2"
-          >
-            <span className="text-xs font-medium">{item.name.replaceAll('_', ' ')}</span>
-            <strong className="text-sm">{item.count}</strong>
-          </div>
-        ))
-      )}
-    </CardContent>
-  </Card>
-)
+const displayDate = (value?: string) =>
+  value
+    ? new Date(value).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' })
+    : 'Not scheduled'
 
 export default function MemberDashboardPage() {
   const { currentUser } = useApp()
@@ -72,38 +43,127 @@ export default function MemberDashboardPage() {
     return (
       <p
         role="alert"
-        className="rounded-xl bg-red-50 p-4 text-sm text-red-700"
+        className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive"
       >
         {remote.error || 'Dashboard data is unavailable.'}
       </p>
     )
+
   const data = remote.data
   const s = data.summary
-  const metrics: Array<[string, string, string]> = [
-    ['Expected This Month', formatCurrency(s.expectedMonth), 'From your contribution schedule'],
-    ['Paid This Month', formatCurrency(s.paidMonth), 'Approved payments'],
-    ['Outstanding', formatCurrency(s.outstanding), `${s.overdueCount} overdue`],
-    ['Total Contributed', formatCurrency(s.totalContributed), 'All approved contributions'],
+  const rate = s.expectedMonth > 0 ? Math.min(100, (s.paidMonth / s.expectedMonth) * 100) : 0
+  const metrics = [
+    {
+      label: 'Total contributed',
+      value: formatCurrency(s.totalContributed),
+      note: 'Lifetime approved payments',
+      icon: WalletCards,
+      tone: 'bg-primary/10 text-primary',
+    },
+    {
+      label: 'Paid this month',
+      value: formatCurrency(s.paidMonth),
+      note: `${rate.toFixed(0)}% of monthly target`,
+      icon: CheckCircle2,
+      tone: 'bg-blue-500/10 text-blue-600',
+    },
+    {
+      label: 'Outstanding',
+      value: formatCurrency(s.outstanding),
+      note: s.overdueCount
+        ? `${s.overdueCount} overdue payment${s.overdueCount === 1 ? '' : 's'}`
+        : 'You are up to date',
+      icon: Clock3,
+      tone: 'bg-amber-500/10 text-amber-600',
+    },
+    {
+      label: 'Assistance received',
+      value: formatCurrency(s.assistanceReceived),
+      note: `${s.pendingCount} request${s.pendingCount === 1 ? '' : 's'} pending`,
+      icon: HandCoins,
+      tone: 'bg-rose-500/10 text-rose-600',
+    },
   ]
 
   return (
-    <div className="min-w-0 space-y-3">
-      <PageHeader
-        title={`Welcome back, ${currentUser?.fullName ?? 'Member'}`}
-        description="Your contribution and assistance overview"
-      />
-      <DashboardMetrics items={metrics} />
+    <div className="min-w-0 space-y-5">
+      <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-primary">
+            Member overview
+          </p>
+          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+            Welcome back, {formatPersonName(currentUser?.fullName)}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Track your contributions, upcoming payment and assistance activity.
+          </p>
+        </div>
+        <Button asChild>
+          <Link to="/member/contributions">
+            <CircleDollarSign className="h-4 w-4" />
+            Make a contribution
+          </Link>
+        </Button>
+      </section>
 
-      <div className="grid gap-3 xl:grid-cols-12">
-        <div className="xl:col-span-7">
-          <DashboardChartCard
-            title="My Contribution History"
-            description="Expected versus approved payments"
-            empty={data.contributionHistory.length === 0}
-            emptyMessage="No contribution history is available yet."
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map(({ label, value, note, icon: Icon, tone }) => (
+          <Card
+            key={label}
+            className="shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/25"
           >
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <span className={`grid h-10 w-10 place-items-center rounded-lg ${tone}`}>
+                  <Icon className="h-5 w-5" />
+                </span>
+                <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="mt-5 text-sm font-medium text-muted-foreground">{label}</p>
+              <p className="mt-1 truncate text-2xl font-extrabold tracking-tight">{value}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{note}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,.75fr)]">
+        <Card className="min-w-0 shadow-card">
+          <CardHeader className="flex-row items-center justify-between space-y-0 p-5 pb-1">
+            <div>
+              <CardTitle>Contribution performance</CardTitle>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Expected compared with approved payments
+              </p>
+            </div>
+            <span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">
+              {rate.toFixed(0)}% paid
+            </span>
+          </CardHeader>
+          <CardContent className="h-[315px] min-w-0 p-3 pt-5 sm:p-5">
             <ResponsiveContainer>
-              <LineChart data={data.contributionHistory}>
+              <AreaChart data={data.contributionHistory}>
+                <defs>
+                  <linearGradient
+                    id="memberPaidFill"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="0%"
+                      stopColor={chartTheme.primary}
+                      stopOpacity={0.28}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor={chartTheme.primary}
+                      stopOpacity={0}
+                    />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid
                   vertical={false}
                   stroke={chartTheme.grid}
@@ -113,118 +173,188 @@ export default function MemberDashboardPage() {
                   dataKey="month"
                   axisLine={false}
                   tickLine={false}
+                  tick={{ fontSize: 11 }}
                 />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={formatCompact}
+                  tick={{ fontSize: 11 }}
+                  width={45}
                 />
                 <Tooltip content={<DashboardTooltip currency />} />
-                <Legend />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="expected"
-                  stroke={chartTheme.secondary}
+                  stroke="#f2a93b"
                   strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
+                  strokeDasharray="5 5"
+                  fill="transparent"
                 />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="paid"
                   stroke={chartTheme.primary}
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
+                  strokeWidth={2.5}
+                  fill="url(#memberPaidFill)"
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
-          </DashboardChartCard>
-        </div>
-        <Card className="shadow-card xl:col-span-5">
-          <CardHeader>
-            <CardTitle>Next Contribution</CardTitle>
-            <CardDescription>Your next scheduled payment</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Detail
-              label="Expected Amount"
-              value={
-                data.nextExpectedAmount === undefined
-                  ? '—'
-                  : formatCurrency(data.nextExpectedAmount)
-              }
-            />
-            <Detail
-              label="Due Date"
-              value={displayDate(data.nextDueDate)}
-            />
-            <Detail
-              label="Grace Period"
-              value={data.gracePeriodDays === undefined ? '—' : `${data.gracePeriodDays} days`}
-            />
-            <Detail
-              label="Effective Overdue Date"
-              value={displayDate(data.effectiveOverdueDate)}
-            />
-            <Detail
-              label="Plan"
-              value={
-                data.planAmount === undefined
-                  ? data.planFrequency
-                  : `${formatCurrency(data.planAmount)} · ${data.planFrequency ?? ''}`
-              }
-            />
-            <Detail
-              label="Late Fee"
-              value={data.planLateFee === undefined ? 'Disabled' : `${data.planLateFee}%`}
-            />
           </CardContent>
         </Card>
-      </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        <CountList
-          title="Payment Status"
-          description="Your contributions by status"
-          items={data.paymentStatuses}
-          empty="No payment records yet."
-        />
-        <CountList
-          title="Assistance Requests"
-          description="Your requests by status"
-          items={data.assistanceStatuses}
-          empty="No assistance requests yet."
-        />
-        <Card className="shadow-card md:col-span-2 xl:col-span-1">
-          <CardHeader>
-            <CardTitle>Recent Contributions</CardTitle>
-            <CardDescription>Your five latest scheduled payments</CardDescription>
+        <Card className="overflow-hidden shadow-card">
+          <CardHeader className="p-5 pb-0">
+            <div className="flex items-center justify-between">
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary">
+                <CalendarClock className="h-5 w-5" />
+              </span>
+              <span className="text-xs font-semibold text-muted-foreground">Next payment</span>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {data.recentContributions.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                No contribution records yet.
-              </p>
-            ) : (
-              data.recentContributions.map((item) => (
+          <CardContent className="p-5">
+            <p className="text-sm text-muted-foreground">Expected amount</p>
+            <p className="mt-1 text-3xl font-extrabold tracking-tight">
+              {data.nextExpectedAmount === undefined
+                ? 'Not scheduled'
+                : formatCurrency(data.nextExpectedAmount)}
+            </p>
+            <div className="my-5 h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{ width: `${rate}%` }}
+              />
+            </div>
+            <div className="space-y-3">
+              {[
+                ['Due date', displayDate(data.nextDueDate)],
+                [
+                  'Grace period',
+                  data.gracePeriodDays === undefined
+                    ? 'Not configured'
+                    : `${data.gracePeriodDays} days`,
+                ],
+                [
+                  'Plan',
+                  data.planAmount === undefined
+                    ? humanizeValue(data.planFrequency || 'Not configured')
+                    : `${formatCurrency(data.planAmount)} · ${humanizeValue(data.planFrequency || '')}`,
+                ],
+                ['Late fee', data.planLateFee === undefined ? 'Disabled' : `${data.planLateFee}%`],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="flex items-center justify-between gap-4 border-b border-border/50 pb-3 last:border-0 last:pb-0"
+                >
+                  <span className="text-xs text-muted-foreground">{label}</span>
+                  <strong className="text-right text-sm">{value}</strong>
+                </div>
+              ))}
+            </div>
+            <Button
+              asChild
+              variant="outline"
+              className="mt-5 w-full"
+            >
+              <Link to="/member/contribution-plan">
+                View contribution plan <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        {[
+          {
+            title: 'Payment status',
+            description: 'Your contributions by status',
+            items: data.paymentStatuses,
+            icon: ReceiptText,
+            empty: 'No payment records yet.',
+          },
+          {
+            title: 'Assistance requests',
+            description: 'Your requests by status',
+            items: data.assistanceStatuses,
+            icon: HandCoins,
+            empty: 'No assistance requests yet.',
+          },
+        ].map(({ title, description, items, icon: Icon, empty }) => (
+          <Card
+            key={title}
+            className="shadow-card"
+          >
+            <CardHeader className="flex-row items-center gap-3 space-y-0 p-5 pb-3">
+              <span className="grid h-9 w-9 place-items-center rounded-lg bg-accent text-primary">
+                <Icon className="h-4 w-4" />
+              </span>
+              <div>
+                <CardTitle>{title}</CardTitle>
+                <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2 p-5 pt-2">
+              {items.length ? (
+                items.map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex items-center justify-between border-b border-border/50 py-2.5 last:border-0"
+                  >
+                    <StatusBadge status={item.name} />
+                    <strong className="text-sm">{item.count}</strong>
+                  </div>
+                ))
+              ) : (
+                <p className="py-7 text-center text-sm text-muted-foreground">{empty}</p>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+
+        <Card className="shadow-card">
+          <CardHeader className="flex-row items-center justify-between space-y-0 p-5 pb-3">
+            <div>
+              <CardTitle>Recent contributions</CardTitle>
+              <p className="mt-1 text-xs text-muted-foreground">Your latest scheduled payments</p>
+            </div>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+            >
+              <Link to="/member/contributions">
+                View all <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="p-2 sm:p-3">
+            {data.recentContributions.length ? (
+              data.recentContributions.slice(0, 5).map((item) => (
                 <div
                   key={`${item.dueDate}-${item.status}`}
-                  className="flex items-center justify-between gap-3 border-b pb-3 last:border-0"
+                  className="flex items-center gap-3 rounded-lg p-3 transition hover:bg-muted/60"
                 >
-                  <div>
-                    <p className="text-sm font-semibold">{formatCurrency(item.paid)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Expected {formatCurrency(item.expected)} · {displayDate(item.dueDate)}
+                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary">
+                    <ReceiptText className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold">{formatCurrency(item.paid)}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      Due {displayDate(item.dueDate)} · Expected {formatCurrency(item.expected)}
                     </p>
                   </div>
                   <StatusBadge status={item.status} />
                 </div>
               ))
+            ) : (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                No contribution records yet.
+              </p>
             )}
           </CardContent>
         </Card>
-      </div>
+      </section>
     </div>
   )
 }

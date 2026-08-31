@@ -13,13 +13,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { useApp } from '@/context/AppContext'
 import { NotificationsPanel } from './NotificationsPanel'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
 export function Header() {
   const { currentUser, logout } = useApp()
   const navigate = useNavigate()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-
   if (!currentUser) return null
 
   const handleSearch = (e: React.FormEvent) => {
@@ -31,7 +31,23 @@ export function Header() {
   }
 
   return (
-    <header className="relative flex h-12 w-full min-w-0 items-center justify-end gap-2 rounded-full border border-border/50 bg-card/90 px-2 shadow-sm backdrop-blur-sm transition-all sm:px-3 md:px-4">
+    <header className="relative flex h-14 w-full min-w-0 items-center justify-between gap-3 px-1 sm:px-3">
+      <form
+        onSubmit={handleSearch}
+        className="relative hidden w-full max-w-xl md:block"
+      >
+        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search members, payments, reports..."
+          className="h-10 bg-card/70 pl-10 pr-16"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          ⌘ K
+        </kbd>
+      </form>
       <div className="flex items-center gap-1 md:gap-2">
         {/* Search toggle - mobile */}
         <Button
@@ -44,12 +60,13 @@ export function Header() {
         </Button>
 
         <NotificationsPanel />
+        <ThemeToggle />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="h-8 gap-2 rounded-full px-1.5 hover:bg-accent/50 transition-colors"
+              className="h-10 gap-2 px-1.5 transition-colors hover:bg-accent/50"
             >
               <Avatar className="h-7 w-7 ring-2 ring-primary/10 ring-offset-2 ring-offset-background">
                 <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-[10px] font-medium text-primary">
@@ -59,8 +76,11 @@ export function Header() {
                     .join('')}
                 </AvatarFallback>
               </Avatar>
-              <span className="hidden max-w-[12rem] truncate text-xs font-medium sm:inline">
-                {currentUser.fullName}
+              <span className="hidden max-w-[12rem] text-left sm:block">
+                <span className="block truncate text-xs font-semibold">{currentUser.fullName}</span>
+                <span className="block text-[10px] capitalize text-muted-foreground">
+                  {currentUser.role.toLowerCase()}
+                </span>
               </span>
               <ChevronDown className="h-3 w-3 text-muted-foreground" />
             </Button>
@@ -116,7 +136,7 @@ export function Header() {
             <Input
               type="search"
               placeholder="Search..."
-              className="h-10 w-full rounded-xl border-border/50 bg-background pl-9 pr-4 text-sm shadow-lg"
+              className="h-10 w-full bg-background pl-9 pr-4 text-sm shadow-lg"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus

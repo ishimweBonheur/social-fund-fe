@@ -1,15 +1,35 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
+import {
+  Download,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Search,
+  ShieldAlert,
+  UserCheck,
+  UsersRound,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import DetailDialog from '@/components/shared/DetailDialog'
 import EmptyState from '@/components/shared/EmptyState'
+import FilterDialog from '@/components/shared/FilterDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
+import Pagination from '@/components/shared/Pagination'
 import StatusBadge from '@/components/shared/StatusBadge'
 import TableActions from '@/components/shared/TableActions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -28,6 +48,7 @@ import {
 } from '@/components/ui/table'
 import { useMembers } from '@/hooks/useMembers'
 import { getApiErrorMessage } from '@/services/api'
+import { formatPersonName } from '@/lib/utils'
 import type {
   ContributionFrequency,
   Member,
@@ -63,9 +84,48 @@ export default function MembersPage() {
   const [showForm, setShowForm] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [status, setStatus] = useState<'ALL' | Member['status']>('ALL')
+  const [joinedFrom, setJoinedFrom] = useState('')
+  const [joinedTo, setJoinedTo] = useState('')
   const [selected, setSelected] = useState<Member>()
   const [statusTarget, setStatusTarget] = useState<Member>()
   const [fieldError, setFieldError] = useState('')
+  const filteredMembers = useMemo(
+    () =>
+      members.filter((member) => {
+        const joined = member.createdAt.slice(0, 10)
+        return (
+          (status === 'ALL' || member.status === status) &&
+          (!joinedFrom || joined >= joinedFrom) &&
+          (!joinedTo || joined <= joinedTo)
+        )
+      }),
+    [members, status, joinedFrom, joinedTo],
+  )
+  const displayedMembers = useMemo(
+    () => filteredMembers.slice((page - 1) * pageSize, page * pageSize),
+    [filteredMembers, page, pageSize],
+  )
+  const activeCount = members.filter((member) => member.status === 'ACTIVE').length
+  const suspendedCount = members.filter((member) => member.status === 'SUSPENDED').length
+  const inactiveCount = members.filter((member) => member.status === 'INACTIVE').length
+  const exportMembers = () => {
+    const csv = [
+      'Name,Email,Phone,Status,Joined',
+      ...filteredMembers.map((member) =>
+        [member.fullName, member.email, member.phone, member.status, member.createdAt]
+          .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+          .join(','),
+      ),
+    ].join('\n')
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
+    link.download = 'social-fund-members.csv'
+    link.click()
+    URL.revokeObjectURL(link.href)
+  }
 
   const openCreate = () => {
     setEditingId(undefined)
@@ -147,38 +207,93 @@ export default function MembersPage() {
   }
 
   return (
-    <div>
+    <div className="min-w-0 space-y-5">
       <PageHeader
         title="Members"
-        description="Create members with their contribution plan and reminder settings"
+        description="Manage members, their contribution plans and account access."
         action={
-          <Button
-            className="rounded-full"
-            onClick={() => (showForm ? setShowForm(false) : openCreate())}
-          >
-            {showForm ? 'Cancel' : 'Add Member'}
+          <Button onClick={() => (showForm ? setShowForm(false) : openCreate())}>
+            {!showForm && <Plus className="h-4 w-4" />}
+            {showForm ? 'Cancel' : 'Add member'}
           </Button>
         }
       />
       <form
-        className="mb-3 flex gap-2"
+        className="hidden"
         onSubmit={(event) => {
           event.preventDefault()
           void reload({ search })
         }}
       >
-        <Input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search members…"
-        />
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="h-10 pl-10"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search members…"
+          />
+        </div>
         <Button
           type="submit"
           variant="outline"
         >
-          Search
+          Search members
         </Button>
       </form>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          [
+            'Total members',
+            members.length,
+            'All registered accounts',
+            UsersRound,
+            'bg-primary/10 text-primary',
+          ],
+          [
+            'Active members',
+            activeCount,
+            members.length
+              ? `${((activeCount / members.length) * 100).toFixed(1)}% of total`
+              : 'No members yet',
+            UserCheck,
+            'bg-blue-500/10 text-blue-600',
+          ],
+          [
+            'Inactive members',
+            inactiveCount,
+            'Require attention',
+            RefreshCw,
+            'bg-amber-500/10 text-amber-600',
+          ],
+          [
+            'Suspended members',
+            suspendedCount,
+            'Access restricted',
+            ShieldAlert,
+            'bg-rose-500/10 text-rose-600',
+          ],
+        ].map(([label, value, detail, Icon, tone]) => {
+          const MetricIcon = Icon as typeof UsersRound
+          return (
+            <Card
+              key={String(label)}
+              className="shadow-card"
+            >
+              <CardContent className="flex items-center gap-4 p-4">
+                <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-lg ${tone}`}>
+                  <MetricIcon className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground">{label as string}</p>
+                  <p className="mt-0.5 text-2xl font-extrabold tracking-tight">{value as number}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">{detail as string}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
       {error && (
         <p
           role="alert"
@@ -201,7 +316,13 @@ export default function MembersPage() {
                   : 'Create a member with an initial contribution plan and reminder settings.'}
               </DialogDescription>
             </DialogHeader>
-            <div className="grid max-h-[65vh] gap-4 overflow-y-auto px-6 py-5 sm:grid-cols-2">
+            <div className="grid max-h-[65vh] gap-x-5 gap-y-4 overflow-y-auto px-6 py-5 sm:grid-cols-2">
+              <div className="border-b border-border/60 pb-3 sm:col-span-2">
+                <p className="text-sm font-bold">Member information</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Basic identity and contact details
+                </p>
+              </div>
               <div>
                 <Label htmlFor="member-name">Full Name</Label>
                 <Input
@@ -232,6 +353,12 @@ export default function MembersPage() {
               </div>
               {!editingId && (
                 <>
+                  <div className="mt-2 border-b border-border/60 pb-3 sm:col-span-2">
+                    <p className="text-sm font-bold">Contribution setup</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Plan schedule, fees and reminders
+                    </p>
+                  </div>
                   <div>
                     <Label htmlFor="plan-amount">Contribution Amount</Label>
                     <Input
@@ -466,13 +593,125 @@ export default function MembersPage() {
           </form>
         </DialogContent>
       </Dialog>
-      <Card>
-        <CardContent className="overflow-x-auto p-0">
+      <Card className="overflow-hidden border-border/70 shadow-card">
+        <div className="flex flex-col gap-4 border-b border-border/60 p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-base font-bold">Member directory</p>
+              <p className="text-xs text-muted-foreground">{filteredMembers.length} members</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={exportMembers}
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+          </div>
+          <form
+            className="flex flex-col gap-2 sm:flex-row"
+            onSubmit={(event) => {
+              event.preventDefault()
+              setPage(1)
+              void reload({ search, status: status === 'ALL' ? undefined : status })
+            }}
+          >
+            <div className="relative min-w-0 flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="h-10 pl-10"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search name, email or phone..."
+              />
+            </div>
+            <FilterDialog
+              activeCount={
+                [status !== 'ALL', Boolean(joinedFrom), Boolean(joinedTo)].filter(Boolean).length
+              }
+              onReset={() => {
+                setStatus('ALL')
+                setJoinedFrom('')
+                setJoinedTo('')
+                setPage(1)
+              }}
+              title="Filter members"
+            >
+              <div>
+                <p className="mb-2 text-xs font-semibold">Account status</p>
+                <Select
+                  value={status}
+                  onValueChange={(value) => {
+                    setStatus(value as typeof status)
+                    setPage(1)
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All statuses</SelectItem>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="INACTIVE">Inactive</SelectItem>
+                    <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-semibold">Joined from</p>
+                <Input
+                  type="date"
+                  aria-label="Joined from"
+                  className="sm:w-40"
+                  value={joinedFrom}
+                  onChange={(event) => {
+                    setJoinedFrom(event.target.value)
+                    setPage(1)
+                  }}
+                />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-semibold">Joined to</p>
+                <Input
+                  type="date"
+                  aria-label="Joined to"
+                  className="sm:w-40"
+                  value={joinedTo}
+                  onChange={(event) => {
+                    setJoinedTo(event.target.value)
+                    setPage(1)
+                  }}
+                />
+              </div>
+            </FilterDialog>
+            <Button
+              type="submit"
+              variant="outline"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
+            {search && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setSearch('')
+                  setPage(1)
+                  void reload()
+                }}
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset
+              </Button>
+            )}
+          </form>
+        </div>
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Member</TableHead>
-                <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Joined</TableHead>
@@ -483,7 +722,7 @@ export default function MembersPage() {
               {isLoading ? (
                 Array.from({ length: 5 }, (_, index) => (
                   <TableRow key={index}>
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={5}>
                       <div className="h-8 animate-pulse rounded-lg bg-muted" />
                     </TableCell>
                   </TableRow>
@@ -491,7 +730,7 @@ export default function MembersPage() {
               ) : members.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={5}
                     className="p-0"
                   >
                     <EmptyState
@@ -519,10 +758,30 @@ export default function MembersPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                members.map((member) => (
+                displayedMembers.map((member) => (
                   <TableRow key={member.id}>
-                    <TableCell className="font-medium">{member.fullName}</TableCell>
-                    <TableCell>{member.email}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarFallback className="bg-accent text-xs font-bold text-primary">
+                            {member.fullName
+                              .split(' ')
+                              .map((part) => part[0])
+                              .join('')
+                              .slice(0, 2)
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-foreground">
+                            {formatPersonName(member.fullName)}
+                          </p>
+                          <p className="truncate text-xs font-normal text-muted-foreground">
+                            {member.email}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
                     <TableCell>{member.phone || '—'}</TableCell>
                     <TableCell>
                       <StatusBadge status={member.status} />
@@ -557,6 +816,18 @@ export default function MembersPage() {
             </TableBody>
           </Table>
         </CardContent>
+        {!isLoading && (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={filteredMembers.length}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size)
+              setPage(1)
+            }}
+          />
+        )}
       </Card>
       <DetailDialog
         open={Boolean(selected)}
@@ -571,7 +842,6 @@ export default function MembersPage() {
                 { label: 'Full Name', value: selected.fullName },
                 { label: 'Email', value: selected.email },
                 { label: 'Phone', value: selected.phone },
-                { label: 'Member ID', value: selected.id },
                 { label: 'Role', value: selected.role },
                 { label: 'Status', value: selected.status, status: true },
                 { label: 'Created', value: new Date(selected.createdAt).toLocaleString() },

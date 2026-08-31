@@ -11,7 +11,7 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Primary navigation"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.18)] backdrop-blur-md md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/92 shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.18)] backdrop-blur-xl dark:bg-[#151522]/92 md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="mx-auto flex w-full max-w-2xl items-stretch gap-0.5 overflow-x-auto px-2 pt-1.5 scrollbar-hide sm:gap-1">
@@ -24,7 +24,7 @@ export function MobileNav() {
             className={({ isActive }) =>
               cn(
                 'group flex min-w-9 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 pb-1.5 text-[10px] font-medium text-muted-foreground transition-colors sm:min-w-12 sm:px-1.5',
-                isActive && 'text-[#1a7a4a]',
+                isActive && 'text-primary',
               )
             }
           >
@@ -34,7 +34,7 @@ export function MobileNav() {
                   aria-hidden="true"
                   className={cn(
                     'flex h-7 w-12 items-center justify-center rounded-lg transition-colors sm:w-14',
-                    isActive && 'bg-[#1a7a4a] text-white',
+                    isActive && 'bg-primary text-white',
                   )}
                 >
                   <Icon

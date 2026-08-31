@@ -21,30 +21,35 @@ export function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'flex h-full min-h-0 w-full flex-col gap-2 overflow-hidden border border-border bg-card py-3 shadow-soft transition-[border-radius] duration-200',
-        expanded ? 'rounded-2xl px-3' : 'items-center rounded-full px-2',
+        'flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#12121a] py-4 text-white transition-all duration-200',
+        expanded ? 'px-3' : 'items-center px-3',
       )}
     >
       <NavLink
         to={dashboardFor(currentUser.role)}
         className={cn(
-          'mb-1 flex h-9 shrink-0 items-center rounded-full text-sm font-semibold tracking-tight text-foreground',
-          expanded ? 'w-full gap-3 px-0' : 'w-9 justify-center',
+          'mb-5 flex h-10 shrink-0 items-center text-sm font-semibold tracking-tight text-white',
+          expanded ? 'w-full gap-3 px-2' : 'w-10 justify-center',
         )}
         title="Social Fund"
       >
         <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
           style={{ backgroundColor: BRAND_GREEN }}
         >
           <FinmLogoIcon className="h-4 w-4" />
         </span>
-        {expanded && <span className="truncate">Social Fund</span>}
+        {expanded && (
+          <div>
+            <span className="block truncate text-base">Social Fund</span>
+            <span className="block text-[10px] font-medium text-slate-400">Community finance</span>
+          </div>
+        )}
       </NavLink>
       <nav
         aria-label="Primary navigation"
         className={cn(
-          'flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto scrollbar-hide',
+          'flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto scrollbar-hide',
           expanded ? 'w-full' : 'items-center',
         )}
       >
@@ -55,9 +60,10 @@ export function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
             title={label}
             className={({ isActive }) =>
               cn(
-                'flex h-9 shrink-0 items-center rounded-xl text-sm font-medium text-[#9CA3AF] transition-colors hover:bg-muted hover:text-foreground',
-                expanded ? 'w-full gap-3 px-3' : 'w-9 justify-center',
-                isActive && 'bg-[#1a7a4a] text-white hover:bg-[#1a7a4a] hover:text-white',
+                'relative flex h-10 shrink-0 items-center rounded-md text-[13px] font-medium text-slate-400 transition-colors hover:bg-white/5 hover:text-slate-100',
+                expanded ? 'w-full gap-3 px-3' : 'w-10 justify-center',
+                isActive &&
+                  'bg-white/[0.07] text-white before:absolute before:left-0 before:h-5 before:w-0.5 before:rounded-full before:bg-primary hover:bg-white/[0.09] hover:text-white',
               )
             }
           >
@@ -76,8 +82,8 @@ export function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
         aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
         aria-expanded={expanded}
         className={cn(
-          'flex h-9 shrink-0 items-center rounded-xl text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
-          expanded ? 'w-full gap-3 px-3' : 'w-9 justify-center',
+          'flex h-10 shrink-0 items-center rounded-md border-t border-white/5 text-[13px] font-medium text-slate-400 transition-colors hover:bg-white/5 hover:text-white',
+          expanded ? 'w-full gap-3 px-3' : 'w-10 justify-center',
         )}
       >
         {expanded ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}

@@ -41,5 +41,6 @@ export function getApiErrorMessage(error: unknown, fallback = 'Unable to complet
     if (code) return code
     if (message) return message
   }
-  return `CLIENT_ERROR: ${fallback}`
+  if (error instanceof Error && error.message) return error.message
+  return fallback
 }

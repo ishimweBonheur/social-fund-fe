@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { getApiErrorMessage } from '@/services/api'
 import { submitSupportRequest } from '@/services/notificationService'
 
@@ -82,11 +83,11 @@ export default function SupportRequestDialog({
             </div>
             <div>
               <Label htmlFor="support-message">Message *</Label>
-              <textarea
+              <Textarea
                 id="support-message"
                 required
                 maxLength={4000}
-                className="mt-1 min-h-32 w-full rounded-xl border bg-card p-3 text-sm"
+                className="min-h-32"
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 placeholder="Explain what happened and include any useful payment reference."

@@ -1,7 +1,8 @@
-import { useCallback, useState, type FormEvent } from 'react'
+import { useCallback, useMemo, useState, type FormEvent } from 'react'
 import { toast } from 'sonner'
 import DetailDialog from '@/components/shared/DetailDialog'
 import EmptyState from '@/components/shared/EmptyState'
+import FilterDialog from '@/components/shared/FilterDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
 import StatusBadge from '@/components/shared/StatusBadge'
 import ServerPagination from '@/components/shared/ServerPagination'
@@ -19,6 +20,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Table,
   TableBody,
   TableCell,
@@ -27,6 +35,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useRemoteData } from '@/hooks/useRemoteData'
+import { formatPersonName, humanizeValue } from '@/lib/utils'
 import { getApiErrorMessage } from '@/services/api'
 import {
   listContributionPlansPage,
@@ -54,16 +63,21 @@ const inputFrom = (plan: ContributionPlan): ContributionPlanInput => ({
 export default function ContributionPlansPage() {
   const [search, setSearch] = useState('')
   const [active, setActive] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL')
+  const [frequency, setFrequency] = useState<'ALL' | ContributionFrequency>('ALL')
+  const [reminders, setReminders] = useState<'ALL' | 'ENABLED' | 'DISABLED'>('ALL')
+  const [lateFees, setLateFees] = useState<'ALL' | 'ENABLED' | 'DISABLED'>('ALL')
+  const [amountMin, setAmountMin] = useState('')
+  const [amountMax, setAmountMax] = useState('')
+  const [dueDay, setDueDay] = useState('')
   const [page, setPage] = useState(1)
   const loader = useCallback(
     () =>
       listContributionPlansPage({
         search,
-        active: active === 'ALL' ? undefined : active === 'ACTIVE',
-        page,
-        pageSize: 10,
+        page: 1,
+        pageSize: 100,
       }),
-    [search, active, page],
+    [search],
   )
   const remote = useRemoteData(loader)
   const [selected, setSelected] = useState<ContributionPlan>()
@@ -71,7 +85,43 @@ export default function ContributionPlansPage() {
   const [form, setForm] = useState<ContributionPlanInput>()
   const [fieldError, setFieldError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
-  const plans = remote.data?.items ?? []
+  const plans = useMemo(() => remote.data?.items ?? [], [remote.data])
+  const filteredPlans = useMemo(
+    () =>
+      plans.filter((plan) => {
+        const amount = Number(plan.amount)
+        return (
+          (active === 'ALL' || plan.isActive === (active === 'ACTIVE')) &&
+          (frequency === 'ALL' || plan.frequency === frequency) &&
+          (reminders === 'ALL' || plan.reminderEnabled === (reminders === 'ENABLED')) &&
+          (lateFees === 'ALL' || plan.lateFeeEnabled === (lateFees === 'ENABLED')) &&
+          (!amountMin || amount >= Number(amountMin)) &&
+          (!amountMax || amount <= Number(amountMax)) &&
+          (!dueDay || plan.dueDay === Number(dueDay))
+        )
+      }),
+    [plans, active, frequency, reminders, lateFees, amountMin, amountMax, dueDay],
+  )
+  const displayedPlans = filteredPlans.slice((page - 1) * 10, page * 10)
+  const filterCount = [
+    active !== 'ALL',
+    frequency !== 'ALL',
+    reminders !== 'ALL',
+    lateFees !== 'ALL',
+    Boolean(amountMin),
+    Boolean(amountMax),
+    Boolean(dueDay),
+  ].filter(Boolean).length
+  const resetFilters = () => {
+    setActive('ALL')
+    setFrequency('ALL')
+    setReminders('ALL')
+    setLateFees('ALL')
+    setAmountMin('')
+    setAmountMax('')
+    setDueDay('')
+    setPage(1)
+  }
   const openEdit = (plan: ContributionPlan) => {
     setEditing(plan)
     setForm(inputFrom(plan))
@@ -104,12 +154,12 @@ export default function ContributionPlansPage() {
     }
   }
   return (
-    <div>
+    <div className="min-w-0">
       <PageHeader
         title="Contribution Plans"
         description="Manage all member contribution plans"
       />
-      <div className="mb-3 flex flex-wrap gap-2">
+      <div className="hidden">
         <Input
           className="max-w-sm"
           value={search}
@@ -120,7 +170,7 @@ export default function ContributionPlansPage() {
           placeholder="Search members…"
         />
         <select
-          className="h-10 rounded-xl border bg-card px-3 text-sm"
+          className="h-10 px-3 text-sm"
           value={active}
           onChange={(event) => {
             setActive(event.target.value as typeof active)
@@ -132,14 +182,8 @@ export default function ContributionPlansPage() {
           <option value="INACTIVE">Inactive</option>
         </select>
       </div>
-      <ServerPagination
-        page={page}
-        pageSize={10}
-        total={remote.data?.total ?? 0}
-        onPageChange={setPage}
-      />
       {remote.isLoading ? (
-        <Card>
+        <Card className="overflow-hidden border-border/70 shadow-card">
           <CardContent className="space-y-3 p-4">
             {Array.from({ length: 5 }, (_, index) => (
               <div
@@ -171,8 +215,155 @@ export default function ContributionPlansPage() {
           }
         />
       ) : (
-        <Card>
-          <CardContent className="overflow-x-auto p-0">
+        <Card className="overflow-hidden border-border/70 shadow-card">
+          <div className="border-b border-border/60 p-4 sm:p-5">
+            <div className="mb-4">
+              <p className="text-base font-bold">Contribution plans</p>
+              <p className="text-xs text-muted-foreground">
+                {filteredPlans.length} of {plans.length} plans
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                className="h-10 flex-1"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.target.value)
+                  setPage(1)
+                }}
+                placeholder="Search members..."
+              />
+              <FilterDialog
+                activeCount={filterCount}
+                onReset={resetFilters}
+                title="Filter contribution plans"
+              >
+                <div>
+                  <p className="mb-2 text-xs font-semibold">Plan status</p>
+                  <Select
+                    value={active}
+                    onValueChange={(value) => {
+                      setActive(value as typeof active)
+                      setPage(1)
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All plans</SelectItem>
+                      <SelectItem value="ACTIVE">Active</SelectItem>
+                      <SelectItem value="INACTIVE">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-semibold">Frequency</p>
+                  <Select
+                    value={frequency}
+                    onValueChange={(value) => {
+                      setFrequency(value as typeof frequency)
+                      setPage(1)
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All frequencies</SelectItem>
+                      {frequencies.map((value) => (
+                        <SelectItem
+                          key={value}
+                          value={value}
+                        >
+                          {value}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-semibold">Reminders</p>
+                  <Select
+                    value={reminders}
+                    onValueChange={(value) => {
+                      setReminders(value as typeof reminders)
+                      setPage(1)
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Any reminder setting</SelectItem>
+                      <SelectItem value="ENABLED">Enabled</SelectItem>
+                      <SelectItem value="DISABLED">Disabled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-semibold">Late fees</p>
+                  <Select
+                    value={lateFees}
+                    onValueChange={(value) => {
+                      setLateFees(value as typeof lateFees)
+                      setPage(1)
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">Any late-fee setting</SelectItem>
+                      <SelectItem value="ENABLED">Enabled</SelectItem>
+                      <SelectItem value="DISABLED">Disabled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-semibold">Due day</p>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="31"
+                    placeholder="Any day"
+                    value={dueDay}
+                    onChange={(event) => {
+                      setDueDay(event.target.value)
+                      setPage(1)
+                    }}
+                  />
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-semibold">Minimum amount</p>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="RWF 0"
+                    value={amountMin}
+                    onChange={(event) => {
+                      setAmountMin(event.target.value)
+                      setPage(1)
+                    }}
+                  />
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-semibold">Maximum amount</p>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="No maximum"
+                    value={amountMax}
+                    onChange={(event) => {
+                      setAmountMax(event.target.value)
+                      setPage(1)
+                    }}
+                  />
+                </div>
+              </FilterDialog>
+            </div>
+          </div>
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -185,11 +376,13 @@ export default function ContributionPlansPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {plans.map((plan) => (
+                {displayedPlans.map((plan) => (
                   <TableRow key={plan.id}>
-                    <TableCell className="font-medium">{plan.memberName}</TableCell>
+                    <TableCell className="font-medium">
+                      {formatPersonName(plan.memberName)}
+                    </TableCell>
                     <TableCell>RWF {Number(plan.amount).toLocaleString()}</TableCell>
-                    <TableCell>{plan.frequency}</TableCell>
+                    <TableCell>{humanizeValue(plan.frequency)}</TableCell>
                     <TableCell>{plan.dueDay ?? '—'}</TableCell>
                     <TableCell>
                       <StatusBadge status={plan.isActive ? 'ACTIVE' : 'INACTIVE'} />
@@ -204,9 +397,25 @@ export default function ContributionPlansPage() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {displayedPlans.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="py-12 text-center text-sm text-muted-foreground"
+                    >
+                      No plans match the selected filters.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
+          <ServerPagination
+            page={page}
+            pageSize={10}
+            total={filteredPlans.length}
+            onPageChange={setPage}
+          />
         </Card>
       )}
       <DetailDialog

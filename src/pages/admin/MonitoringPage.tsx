@@ -1,9 +1,11 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { Search } from 'lucide-react'
 import EmptyState from '@/components/shared/EmptyState'
 import { FundTable } from '@/components/shared/FundTable'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { useRemoteData } from '@/hooks/useRemoteData'
 import { getHealth, getMetrics } from '@/services/monitoringService'
 
@@ -12,6 +14,16 @@ export default function MonitoringPage() {
   const loadMetrics = useCallback(() => getMetrics(), [])
   const health = useRemoteData(loadHealth)
   const metrics = useRemoteData(loadMetrics)
+  const [search, setSearch] = useState('')
+  const filteredMetrics = useMemo(
+    () =>
+      (metrics.data ?? []).filter((item) =>
+        [item.metric, item.labels, item.value].some((value) =>
+          String(value).toLowerCase().includes(search.toLowerCase()),
+        ),
+      ),
+    [metrics.data, search],
+  )
   const reload = () => {
     health.reload()
     metrics.reload()
@@ -88,7 +100,20 @@ export default function MonitoringPage() {
       ) : (
         <FundTable
           columns={['Metric', 'Labels', 'Value']}
-          rows={(metrics.data ?? []).map((item) => [item.metric, item.labels, item.value])}
+          rows={filteredMetrics.map((item) => [item.metric, item.labels, item.value])}
+          title="Operational metrics"
+          description={`${filteredMetrics.length} metrics`}
+          toolbar={
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-10"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Filter metrics or labels..."
+              />
+            </div>
+          }
         />
       )}
     </div>

@@ -12,10 +12,10 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="mb-4 flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      className="mb-4 flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
     >
       <div className="min-w-0">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">{title}</h1>
+        <h1 className="text-2xl font-extrabold tracking-[-0.025em] text-foreground">{title}</h1>
         {description && (
           <p className="mt-0.5 text-sm font-normal text-muted-foreground">{description}</p>
         )}
