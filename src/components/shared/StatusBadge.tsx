@@ -12,12 +12,9 @@ export default function StatusBadge({ status, className }: { status: string; cla
     <Badge
       variant="outline"
       className={cn(
-        danger.has(value) &&
-          'border-red-200/70 bg-red-50 text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300',
-        warning.has(value) &&
-          'border-amber-200/70 bg-amber-50 text-amber-700 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-300',
-        success.has(value) &&
-          'border-emerald-200/70 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300',
+        danger.has(value) && 'border-[#213448]/25 bg-[#213448]/10 text-[#213448] dark:border-[#94B4C1]/35 dark:bg-[#94B4C1]/10 dark:text-[#EAE0CF]',
+        warning.has(value) && 'border-[#547792]/30 bg-[#94B4C1]/25 text-[#213448] dark:border-[#94B4C1]/35 dark:bg-[#547792]/30 dark:text-[#EAE0CF]',
+        success.has(value) && 'border-[#94B4C1]/60 bg-[#94B4C1]/30 text-[#213448] dark:border-[#94B4C1]/45 dark:bg-[#94B4C1]/15 dark:text-[#EAE0CF]',
         className,
       )}
     >

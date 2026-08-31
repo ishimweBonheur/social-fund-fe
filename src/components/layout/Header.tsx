@@ -1,5 +1,5 @@
-import { Bell, ChevronDown, LogOut, Search, Settings, UserRound, X } from 'lucide-react'
-import { useState } from 'react'
+import { Bell, ChevronDown, LoaderCircle, LogOut, Search, Settings, UserRound, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -12,23 +12,113 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { useApp } from '@/context/AppContext'
+import { navigation } from '@/config/navigation'
+import { listMembers } from '@/services/memberService'
+import type { Member } from '@/types/app'
 import { NotificationsPanel } from './NotificationsPanel'
-import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
 export function Header() {
   const { currentUser, logout } = useApp()
   const navigate = useNavigate()
+  const searchRef = useRef<HTMLInputElement>(null)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [memberResults, setMemberResults] = useState<Member[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [showResults, setShowResults] = useState(false)
+  const role = currentUser?.role ?? 'MEMBER'
+  const query = searchQuery.trim().toLowerCase()
+  const pageResults = useMemo(
+    () => navigation[role].filter((item) => item.label.toLowerCase().includes(query)),
+    [role, query],
+  )
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setIsSearchOpen(true)
+        requestAnimationFrame(() => searchRef.current?.focus())
+      }
+    }
+    window.addEventListener('keydown', focusSearch)
+    return () => window.removeEventListener('keydown', focusSearch)
+  }, [])
+
   if (!currentUser) return null
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle search logic here
-    console.log('Searching for:', searchQuery)
-    setSearchQuery('')
-    setIsSearchOpen(false)
+    if (!query) return
+    setShowResults(true)
+    if (currentUser.role === 'ADMIN') {
+      setIsSearching(true)
+      try {
+        const result = await listMembers({ search: searchQuery.trim(), page: 1, pageSize: 6 })
+        setMemberResults(result.members)
+      } catch {
+        setMemberResults([])
+      } finally {
+        setIsSearching(false)
+      }
+    } else if (pageResults.length === 1) {
+      navigate(pageResults[0].to)
+      setShowResults(false)
+      setIsSearchOpen(false)
+    }
   }
+
+  const searchResults = showResults && query && (
+    <div className="absolute left-0 right-0 top-[calc(100%+.5rem)] z-50 max-h-96 overflow-auto rounded-xl bg-card p-2 shadow-card">
+      {pageResults.length > 0 && (
+        <div className="mb-1">
+          <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Pages</p>
+          {pageResults.map(({ to, label, icon: Icon }) => (
+            <button
+              key={to}
+              type="button"
+              onClick={() => {
+                navigate(to)
+                setShowResults(false)
+                setIsSearchOpen(false)
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent"
+            >
+              <Icon className="h-4 w-4 text-primary" /> {label}
+            </button>
+          ))}
+        </div>
+      )}
+      {currentUser.role === 'ADMIN' && (
+        <div>
+          <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Members</p>
+          {isSearching ? (
+            <div className="flex items-center gap-2 px-3 py-3 text-sm text-muted-foreground"><LoaderCircle className="h-4 w-4 animate-spin" /> Searching…</div>
+          ) : memberResults.length ? (
+            memberResults.map((member) => (
+              <button
+                key={member.id}
+                type="button"
+                onClick={() => {
+                  navigate('/admin/members', { state: { member } })
+                  setShowResults(false)
+                  setIsSearchOpen(false)
+                }}
+                className="block w-full rounded-lg px-3 py-2 text-left hover:bg-accent"
+              >
+                <span className="block text-sm font-medium">{member.fullName}</span>
+                <span className="block text-xs text-muted-foreground">{member.email}</span>
+              </button>
+            ))
+          ) : (
+            <p className="px-3 py-2 text-xs text-muted-foreground">Press Enter to search members.</p>
+          )}
+        </div>
+      )}
+      {!isSearching && pageResults.length === 0 && currentUser.role !== 'ADMIN' && (
+        <p className="px-3 py-3 text-sm text-muted-foreground">No matching destination.</p>
+      )}
+    </div>
+  )
 
   return (
     <header className="relative flex h-14 w-full min-w-0 items-center justify-between gap-3 px-1 sm:px-3">
@@ -38,15 +128,22 @@ export function Header() {
       >
         <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
+          ref={searchRef}
           type="search"
           placeholder="Search members, payments, reports..."
           className="h-10 bg-card/70 pl-10 pr-16"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onFocus={() => setShowResults(true)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value)
+            setMemberResults([])
+            setShowResults(true)
+          }}
         />
         <kbd className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
           ⌘ K
         </kbd>
+        {searchResults}
       </form>
       <div className="flex items-center gap-1 md:gap-2">
         {/* Search toggle - mobile */}
@@ -60,7 +157,6 @@ export function Header() {
         </Button>
 
         <NotificationsPanel />
-        <ThemeToggle />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -134,13 +230,19 @@ export function Header() {
           >
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              ref={searchRef}
               type="search"
               placeholder="Search..."
               className="h-10 w-full bg-background pl-9 pr-4 text-sm shadow-lg"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setMemberResults([])
+                setShowResults(true)
+              }}
               autoFocus
             />
+            {searchResults}
           </form>
         </div>
       )}

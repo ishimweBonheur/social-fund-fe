@@ -27,9 +27,16 @@ export async function getHealth(): Promise<HealthStatus> {
   }
 }
 
-export async function getMetrics(): Promise<MetricSample[]> {
-  const { data } = await apiClient.get<string>(`${apiOrigin()}/metrics`, { responseType: 'text' })
-  return data
+export async function getMetrics(
+  query: { search?: string; page?: number; pageSize?: number } = {},
+) {
+  const page = query.page ?? 1
+  const pageSize = query.pageSize ?? 10
+  const response = await apiClient.get<string>(`${apiOrigin()}/metrics`, {
+    responseType: 'text',
+    params: { search: query.search || undefined, limit: pageSize, offset: (page - 1) * pageSize },
+  })
+  const items = response.data
     .split('\n')
     .map((line) => line.trim())
     .filter((line) => line && !line.startsWith('#'))
@@ -39,4 +46,5 @@ export async function getMetrics(): Promise<MetricSample[]> {
         ? { metric: match[1], labels: match[2] || '—', value: match[3] }
         : { metric: line, labels: '—', value: '—' }
     })
+  return { items, total: Number(response.headers['x-total-count'] ?? items.length), page, pageSize }
 }

@@ -21,14 +21,14 @@ export function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#12121a] py-4 text-white transition-all duration-200',
+        'flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#213448] py-4 text-[#EAE0CF] transition-all duration-200',
         expanded ? 'px-3' : 'items-center px-3',
       )}
     >
       <NavLink
         to={dashboardFor(currentUser.role)}
         className={cn(
-          'mb-5 flex h-10 shrink-0 items-center text-sm font-semibold tracking-tight text-white',
+          'mb-5 flex h-10 shrink-0 items-center text-sm font-semibold tracking-tight text-[#EAE0CF]',
           expanded ? 'w-full gap-3 px-2' : 'w-10 justify-center',
         )}
         title="Social Fund"
@@ -42,7 +42,7 @@ export function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
         {expanded && (
           <div>
             <span className="block truncate text-base">Social Fund</span>
-            <span className="block text-[10px] font-medium text-slate-400">Community finance</span>
+            <span className="block text-[10px] font-medium text-[#94B4C1]">Community finance</span>
           </div>
         )}
       </NavLink>
@@ -60,10 +60,10 @@ export function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
             title={label}
             className={({ isActive }) =>
               cn(
-                'relative flex h-10 shrink-0 items-center rounded-md text-[13px] font-medium text-slate-400 transition-colors hover:bg-white/5 hover:text-slate-100',
+                'relative flex h-10 shrink-0 items-center rounded-md text-[13px] font-medium text-[#94B4C1] transition-colors hover:bg-[#547792]/25 hover:text-[#EAE0CF]',
                 expanded ? 'w-full gap-3 px-3' : 'w-10 justify-center',
                 isActive &&
-                  'bg-white/[0.07] text-white before:absolute before:left-0 before:h-5 before:w-0.5 before:rounded-full before:bg-primary hover:bg-white/[0.09] hover:text-white',
+                  'bg-[#547792]/35 text-[#EAE0CF] before:absolute before:left-0 before:h-5 before:w-0.5 before:rounded-full before:bg-[#94B4C1] hover:bg-[#547792]/45 hover:text-[#EAE0CF]',
               )
             }
           >
@@ -82,7 +82,7 @@ export function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
         aria-label={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
         aria-expanded={expanded}
         className={cn(
-          'flex h-10 shrink-0 items-center rounded-md border-t border-white/5 text-[13px] font-medium text-slate-400 transition-colors hover:bg-white/5 hover:text-white',
+          'flex h-10 shrink-0 items-center rounded-md border-t border-[#94B4C1]/20 text-[13px] font-medium text-[#94B4C1] transition-colors hover:bg-[#547792]/25 hover:text-[#EAE0CF]',
           expanded ? 'w-full gap-3 px-3' : 'w-10 justify-center',
         )}
       >

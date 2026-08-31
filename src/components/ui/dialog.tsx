@@ -13,7 +13,7 @@ const DialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn('fixed inset-0 z-50 bg-black/45 backdrop-blur-[1px]', className)}
+    className={cn('fixed inset-0 z-50 bg-[#213448]/55 backdrop-blur-[1px]', className)}
     {...props}
   />
 ))
@@ -27,7 +27,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border border-border/70 bg-card shadow-[0_24px_80px_-24px_rgba(20,16,55,0.38)] [&_input:not([type=checkbox])]:w-full [&_select]:h-10 [&_select]:w-full [&_textarea]:w-full [&_[role=combobox]]:h-10 [&_[role=combobox]]:w-full',
+        'fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg bg-card shadow-[0_24px_80px_-24px_rgba(33,52,72,0.38)] [&_input:not([type=checkbox])]:w-full [&_select]:h-10 [&_select]:w-full [&_textarea]:w-full [&_[role=combobox]]:h-10 [&_[role=combobox]]:w-full',
         className,
       )}
       {...props}
@@ -43,14 +43,14 @@ const DialogContent = React.forwardRef<
 DialogContent.displayName = 'DialogContent'
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn('border-b px-6 py-5 pr-12', className)}
+    className={cn('px-6 py-5 pr-12 shadow-[0_8px_20px_-20px_rgba(33,52,72,.7)]', className)}
     {...props}
   />
 )
 const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      'flex flex-col-reverse gap-2 border-t border-border/60 px-6 py-4 sm:flex-row sm:justify-end',
+      'flex flex-col-reverse gap-2 px-6 py-4 shadow-[0_-8px_20px_-20px_rgba(33,52,72,.7)] sm:flex-row sm:justify-end',
       className,
     )}
     {...props}

@@ -59,13 +59,15 @@ export default function MemberDashboardPage() {
       note: 'Lifetime approved payments',
       icon: WalletCards,
       tone: 'bg-primary/10 text-primary',
+      to: '/member/contributions',
     },
     {
       label: 'Paid this month',
       value: formatCurrency(s.paidMonth),
       note: `${rate.toFixed(0)}% of monthly target`,
       icon: CheckCircle2,
-      tone: 'bg-blue-500/10 text-blue-600',
+      tone: 'bg-[#547792]/15 text-[#547792]',
+      to: '/member/contributions',
     },
     {
       label: 'Outstanding',
@@ -74,14 +76,16 @@ export default function MemberDashboardPage() {
         ? `${s.overdueCount} overdue payment${s.overdueCount === 1 ? '' : 's'}`
         : 'You are up to date',
       icon: Clock3,
-      tone: 'bg-amber-500/10 text-amber-600',
+      tone: 'bg-[#94B4C1]/25 text-[#547792]',
+      to: '/member/contributions',
     },
     {
       label: 'Assistance received',
       value: formatCurrency(s.assistanceReceived),
       note: `${s.pendingCount} request${s.pendingCount === 1 ? '' : 's'} pending`,
       icon: HandCoins,
-      tone: 'bg-rose-500/10 text-rose-600',
+      tone: 'bg-[#213448]/10 text-[#547792]',
+      to: '/member/loans',
     },
   ]
 
@@ -108,23 +112,22 @@ export default function MemberDashboardPage() {
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map(({ label, value, note, icon: Icon, tone }) => (
-          <Card
-            key={label}
-            className="shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/25"
-          >
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <span className={`grid h-10 w-10 place-items-center rounded-lg ${tone}`}>
-                  <Icon className="h-5 w-5" />
-                </span>
-                <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="mt-5 text-sm font-medium text-muted-foreground">{label}</p>
-              <p className="mt-1 truncate text-2xl font-extrabold tracking-tight">{value}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{note}</p>
-            </CardContent>
-          </Card>
+        {metrics.map(({ label, value, note, icon: Icon, tone, to }) => (
+          <Link key={label} to={to} className="block">
+            <Card className="h-full shadow-card transition-all hover:-translate-y-0.5 hover:shadow-soft">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <span className={`grid h-10 w-10 place-items-center rounded-lg ${tone}`}>
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <p className="mt-5 text-sm font-medium text-muted-foreground">{label}</p>
+                <p className="mt-1 truncate text-2xl font-extrabold tracking-tight">{value}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{note}</p>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </section>
 
@@ -141,65 +144,74 @@ export default function MemberDashboardPage() {
               {rate.toFixed(0)}% paid
             </span>
           </CardHeader>
-          <CardContent className="h-[315px] min-w-0 p-3 pt-5 sm:p-5">
-            <ResponsiveContainer>
-              <AreaChart data={data.contributionHistory}>
-                <defs>
-                  <linearGradient
-                    id="memberPaidFill"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="0%"
-                      stopColor={chartTheme.primary}
-                      stopOpacity={0.28}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor={chartTheme.primary}
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  vertical={false}
-                  stroke={chartTheme.grid}
-                  strokeDasharray="3 5"
-                />
-                <XAxis
-                  dataKey="month"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11 }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={formatCompact}
-                  tick={{ fontSize: 11 }}
-                  width={45}
-                />
-                <Tooltip content={<DashboardTooltip currency />} />
-                <Area
-                  type="monotone"
-                  dataKey="expected"
-                  stroke="#f2a93b"
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                  fill="transparent"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="paid"
-                  stroke={chartTheme.primary}
-                  strokeWidth={2.5}
-                  fill="url(#memberPaidFill)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          <CardContent className="h-78.75 min-w-0 p-3 pt-5 sm:p-5">
+            {data.contributionHistory.length ? (
+              <ResponsiveContainer
+                width="100%"
+                height={280}
+              >
+                <AreaChart data={data.contributionHistory}>
+                  <defs>
+                    <linearGradient
+                      id="memberPaidFill"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor={chartTheme.primary}
+                        stopOpacity={0.28}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor={chartTheme.primary}
+                        stopOpacity={0}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    vertical={false}
+                    stroke={chartTheme.grid}
+                    strokeDasharray="3 5"
+                  />
+                  <XAxis
+                    dataKey="month"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={formatCompact}
+                    tick={{ fontSize: 11 }}
+                    width={45}
+                  />
+                  <Tooltip content={<DashboardTooltip currency />} />
+                  <Area
+                    type="monotone"
+                    dataKey="expected"
+                    stroke="#94B4C1"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    fill="transparent"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="paid"
+                    stroke={chartTheme.primary}
+                    strokeWidth={2.5}
+                    fill="url(#memberPaidFill)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="grid h-full place-items-center rounded-xl bg-muted/40 px-6 text-center text-sm text-muted-foreground">
+                No contribution history yet.
+              </div>
+            )}
           </CardContent>
         </Card>
 

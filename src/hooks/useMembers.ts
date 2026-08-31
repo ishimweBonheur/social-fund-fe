@@ -14,6 +14,7 @@ const emptyQuery: MemberQuery = {}
 
 export function useMembers(initialQuery: MemberQuery = emptyQuery) {
   const [members, setMembers] = useState<Member[]>([])
+  const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -24,6 +25,7 @@ export function useMembers(initialQuery: MemberQuery = emptyQuery) {
       try {
         const result = await listMembers(query)
         setMembers(result.members)
+        setTotal(result.total)
       } catch (reason) {
         setError(getApiErrorMessage(reason, 'Unable to load members.'))
       } finally {
@@ -37,7 +39,10 @@ export function useMembers(initialQuery: MemberQuery = emptyQuery) {
     let active = true
     void listMembers(initialQuery)
       .then((result) => {
-        if (active) setMembers(result.members)
+        if (active) {
+          setMembers(result.members)
+          setTotal(result.total)
+        }
       })
       .catch((reason) => {
         if (active) setError(getApiErrorMessage(reason, 'Unable to load members.'))
@@ -68,5 +73,16 @@ export function useMembers(initialQuery: MemberQuery = emptyQuery) {
     )
   }
 
-  return { members, isLoading, error, setError, reload: load, create, update, find, changeStatus }
+  return {
+    members,
+    total,
+    isLoading,
+    error,
+    setError,
+    reload: load,
+    create,
+    update,
+    find,
+    changeStatus,
+  }
 }

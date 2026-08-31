@@ -46,9 +46,9 @@ export function FundTable({
   footer?: ReactNode
 }) {
   return (
-    <Card className="overflow-hidden border-border/70 shadow-card">
+    <Card className="overflow-hidden shadow-card">
       {(title || toolbar) && (
-        <div className="border-b border-border/60 p-4 sm:p-5">
+        <div className="p-4 shadow-[0_8px_20px_-22px_rgba(33,52,72,.7)] sm:p-5">
           {title && (
             <div className="mb-4">
               <p className="text-base font-bold">{title}</p>

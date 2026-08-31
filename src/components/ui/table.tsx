@@ -109,7 +109,7 @@ const TableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn('bg-muted/45 [&_tr]:border-b [&_tr]:border-border/60 max-sm:hidden', className)}
+    className={cn('bg-muted/45 shadow-[0_8px_18px_-20px_rgba(33,52,72,.65)] max-sm:hidden', className)}
     {...props}
   />
 ))
@@ -121,7 +121,7 @@ const TableBody = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <tbody
     ref={ref}
-    className={cn('[&_tr:last-child]:border-0 max-sm:block max-sm:space-y-3 max-sm:p-3', className)}
+    className={cn('max-sm:block max-sm:space-y-3 max-sm:p-3', className)}
     {...props}
   />
 ))
@@ -132,7 +132,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
     <tr
       ref={ref}
       className={cn(
-        'border-b border-border/40 transition-colors hover:bg-accent/35 data-[state=selected]:bg-accent/50 max-sm:block max-sm:rounded-lg max-sm:border max-sm:bg-card max-sm:p-2',
+        'transition-colors hover:bg-accent/35 data-[state=selected]:bg-accent/50 max-sm:block max-sm:rounded-lg max-sm:bg-card max-sm:p-2 max-sm:shadow-sm',
         className,
       )}
       {...props}

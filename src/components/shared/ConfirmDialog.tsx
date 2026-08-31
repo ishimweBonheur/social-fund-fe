@@ -43,7 +43,7 @@ export default function ConfirmDialog({
           <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             disabled={busy}
-            className={destructive ? 'bg-red-600 text-white hover:bg-red-700' : ''}
+            className={destructive ? 'bg-[#213448] text-[#EAE0CF] hover:bg-[#547792]' : ''}
             onClick={(event) => {
               event.preventDefault()
               onConfirm()

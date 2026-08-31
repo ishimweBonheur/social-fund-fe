@@ -62,8 +62,8 @@ export default function ProfileForm({ admin = false }: ProfileFormProps) {
         }
       />
 
-      <Card className="relative overflow-hidden border-border/70 shadow-card">
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-primary/14 via-violet-500/8 to-transparent" />
+      <Card className="relative overflow-hidden shadow-card">
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-[#547792]/20 via-[#94B4C1]/15 to-transparent" />
         <CardContent className="relative flex flex-col gap-5 p-6 sm:flex-row sm:items-end sm:justify-between sm:p-8">
           <div className="flex min-w-0 items-center gap-4">
             <Avatar className="size-20 border-4 border-background shadow-sm">
@@ -89,7 +89,7 @@ export default function ProfileForm({ admin = false }: ProfileFormProps) {
       </Card>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,.65fr)]">
-        <Card className="border-border/70 shadow-card">
+        <Card className="shadow-card">
           <CardHeader className="border-b border-border/70 pb-5">
             <CardTitle>Personal information</CardTitle>
             <p className="text-sm text-muted-foreground">
@@ -117,7 +117,7 @@ export default function ProfileForm({ admin = false }: ProfileFormProps) {
         </Card>
 
         <div className="space-y-5">
-          <Card className="border-border/70 shadow-card">
+          <Card className="shadow-card">
             <CardHeader className="border-b border-border/70 pb-4">
               <CardTitle>Account access</CardTitle>
             </CardHeader>
@@ -136,7 +136,7 @@ export default function ProfileForm({ admin = false }: ProfileFormProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-border/70 shadow-card">
+          <Card className="shadow-card">
             <CardHeader className="pb-3">
               <CardTitle>Preferences & activity</CardTitle>
             </CardHeader>

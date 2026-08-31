@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { Header } from './Header'
 import { MobileNav } from './MobileNav'
 import { Sidebar } from './Sidebar'
+import { Breadcrumbs } from './Breadcrumbs'
 
 export function AppLayout() {
   const [sidebarExpanded, setSidebarExpanded] = useState(
@@ -18,7 +19,7 @@ export function AppLayout() {
     <div className="min-h-screen overflow-x-clip bg-background">
       <div
         className={cn(
-          'fixed bottom-0 left-0 top-0 z-40 hidden overflow-visible border-r border-white/7 bg-[#12121a] transition-[width] duration-200 md:block',
+          'fixed bottom-0 left-0 top-0 z-40 hidden overflow-visible bg-[#213448] shadow-[8px_0_28px_-20px_rgba(33,52,72,.8)] transition-[width] duration-200 md:block',
           sidebarExpanded ? 'w-60' : 'w-[4.5rem]',
         )}
       >
@@ -30,7 +31,7 @@ export function AppLayout() {
 
       <div
         className={cn(
-          'fixed inset-x-0 top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur-xl transition-[left] duration-200',
+          'fixed inset-x-0 top-0 z-30 bg-background/90 shadow-[0_8px_28px_-24px_rgba(33,52,72,.65)] backdrop-blur-xl transition-[left] duration-200',
           sidebarExpanded ? 'md:left-60' : 'md:left-[4.5rem]',
         )}
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
@@ -48,6 +49,7 @@ export function AppLayout() {
         )}
       >
         <div className="mx-auto w-full min-w-0 max-w-[1600px]">
+          <Breadcrumbs />
           <Outlet />
         </div>
       </main>

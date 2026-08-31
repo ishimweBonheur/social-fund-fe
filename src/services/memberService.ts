@@ -18,6 +18,8 @@ export interface MemberQuery {
   status?: MemberStatus
   page?: number
   pageSize?: number
+  joinedFrom?: string
+  joinedTo?: string
 }
 export interface MemberList {
   members: Member[]
@@ -74,18 +76,21 @@ export async function listMembers(query: MemberQuery = {}): Promise<MemberList> 
     data: MemberDto[]
     limit: number
     offset: number
+    total: number
   }>('/admin/users/', {
     params: {
       search: query.search || undefined,
       status: query.status,
       role: 'MEMBER',
+      date_from: query.joinedFrom || undefined,
+      date_to: query.joinedTo || undefined,
       limit,
       offset: (page - 1) * limit,
     },
   })
   return {
     members: response.data.map(mapMember),
-    total: response.data.length,
+    total: response.total,
     page,
     pageSize: response.limit || limit,
   }

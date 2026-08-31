@@ -97,8 +97,20 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
       admin
         ? listAdminContributions({
             search,
-            page: 1,
-            pageSize: 100,
+            status: status === 'ALL' ? undefined : status,
+            dueFrom: dueFrom || undefined,
+            dueTo: dueTo || undefined,
+            method: method === 'ALL' ? undefined : method,
+            proof: proof === 'ALL' ? undefined : proof,
+            paymentState: paymentState === 'ALL' ? undefined : paymentState,
+            lateFee: lateFee === 'ALL' ? undefined : lateFee,
+            reference: reference === 'ALL' ? undefined : reference,
+            paidFrom: paidFrom || undefined,
+            paidTo: paidTo || undefined,
+            amountMin: amountMin || undefined,
+            amountMax: amountMax || undefined,
+            page,
+            pageSize: 10,
           })
         : (() =>
             listMyContributions().then((items) => ({
@@ -107,7 +119,23 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
               page: 1,
               pageSize: 100,
             })))(),
-    [admin, search],
+    [
+      admin,
+      search,
+      status,
+      dueFrom,
+      dueTo,
+      method,
+      proof,
+      paymentState,
+      lateFee,
+      reference,
+      paidFrom,
+      paidTo,
+      amountMin,
+      amountMax,
+      page,
+    ],
   )
   const remote = useRemoteData(loader)
   const [selected, setSelected] = useState<Contribution>()
@@ -125,57 +153,8 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState('')
   const items = useMemo(() => remote.data?.items ?? [], [remote.data])
-  const methods = useMemo(
-    () =>
-      [
-        ...new Set(
-          items
-            .map((item) => item.paymentMethod)
-            .filter((value): value is string => Boolean(value)),
-        ),
-      ].sort(),
-    [items],
-  )
-  const filteredItems = useMemo(
-    () =>
-      items.filter((item) => {
-        const amount = Number(item.totalDue)
-        const due = item.dueDate.slice(0, 10)
-        const paid = Number(item.paidAmount || 0)
-        const completion = paid <= 0 ? 'UNPAID' : paid < amount ? 'PARTIAL' : 'PAID'
-        const paidDate = item.paymentDate?.slice(0, 10) || ''
-        return (
-          (status === 'ALL' || item.status === status) &&
-          (!dueFrom || due >= dueFrom) &&
-          (!dueTo || due <= dueTo) &&
-          (method === 'ALL' || item.paymentMethod === method) &&
-          (proof === 'ALL' || Boolean(item.proofUploadedAt) === (proof === 'WITH')) &&
-          (paymentState === 'ALL' || completion === paymentState) &&
-          (lateFee === 'ALL' || Number(item.lateFeeAmount) > 0 === (lateFee === 'WITH')) &&
-          (reference === 'ALL' || Boolean(item.transactionReference) === (reference === 'WITH')) &&
-          (!paidFrom || (paidDate !== '' && paidDate >= paidFrom)) &&
-          (!paidTo || (paidDate !== '' && paidDate <= paidTo)) &&
-          (!amountMin || amount >= Number(amountMin)) &&
-          (!amountMax || amount <= Number(amountMax))
-        )
-      }),
-    [
-      items,
-      status,
-      dueFrom,
-      dueTo,
-      method,
-      proof,
-      paymentState,
-      lateFee,
-      reference,
-      paidFrom,
-      paidTo,
-      amountMin,
-      amountMax,
-    ],
-  )
-  const displayedItems = filteredItems.slice((page - 1) * 10, page * 10)
+  const methods = ['MOBILE_MONEY', 'BANK_TRANSFER', 'CASH']
+  const displayedItems = items
   const filterCount = [
     status !== 'ALL',
     Boolean(dueFrom),
@@ -308,7 +287,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
         )}
       </div>
       {formError && (
-        <p className="mb-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">{formError}</p>
+        <p className="mb-3 rounded-xl bg-[#94B4C1]/25 p-3 text-sm text-[#213448] dark:text-[#EAE0CF]">{formError}</p>
       )}
       {!admin && items.some((item) => item.status === 'PENDING') && (
         <Card className="mb-3">
@@ -336,7 +315,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
         </Card>
       )}
       {remote.isLoading ? (
-        <Card className="overflow-hidden border-border/70 shadow-card">
+        <Card className="overflow-hidden shadow-card">
           <CardContent className="space-y-3 p-4">
             {Array.from({ length: 5 }, (_, index) => (
               <div
@@ -371,15 +350,13 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
           }
         />
       ) : (
-        <Card className="overflow-hidden border-border/70 shadow-card">
+        <Card className="overflow-hidden shadow-card">
           <div className="border-b border-border/60 p-4 sm:p-5">
             <div className="mb-4">
               <p className="text-base font-bold">
                 {admin ? 'Contribution directory' : 'Contribution history'}
               </p>
-              <p className="text-xs text-muted-foreground">
-                {filteredItems.length} of {items.length} records
-              </p>
+              <p className="text-xs text-muted-foreground">{remote.data?.total ?? 0} records</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
@@ -687,7 +664,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
             <ServerPagination
               page={page}
               pageSize={10}
-              total={filteredItems.length}
+              total={remote.data?.total ?? 0}
               onPageChange={setPage}
             />
           )}
@@ -763,7 +740,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
               Cancel
             </Button>
             <Button
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-[#213448] text-[#EAE0CF] hover:bg-[#547792]"
               disabled={busy || !reason.trim()}
               onClick={() => {
                 if (rejectTarget)

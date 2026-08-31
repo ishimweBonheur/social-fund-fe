@@ -20,7 +20,7 @@ export function FinmLogo({ showName = true, iconClassName, className }: FinmLogo
         style={{ backgroundColor: BRAND_GREEN }}
       >
         <Landmark
-          className={cn('h-3.5 w-3.5 text-white sm:h-4 sm:w-4', iconClassName)}
+          className={cn('h-3.5 w-3.5 text-[#EAE0CF] sm:h-4 sm:w-4', iconClassName)}
           strokeWidth={2}
         />
       </div>
@@ -36,7 +36,7 @@ export function FinmLogo({ showName = true, iconClassName, className }: FinmLogo
 export function FinmLogoIcon({ className }: { className?: string }) {
   return (
     <Landmark
-      className={cn('h-4 w-4 text-white', className)}
+      className={cn('h-4 w-4 text-[#EAE0CF]', className)}
       strokeWidth={2}
     />
   )

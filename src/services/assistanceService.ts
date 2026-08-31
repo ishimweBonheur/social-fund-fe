@@ -60,17 +60,38 @@ const map = (value: AssistanceDto): AssistanceRequest => ({
   disbursedAt: value.DisbursedAt,
   createdAt: value.CreatedAt,
 })
-export async function listMyAssistanceRequests() {
-  const { data } = await apiClient.get<{ data: AssistanceDto[] }>('/assistance-requests/', {
-    params: { limit: 100 },
-  })
-  return data.data.map(map)
+export interface AssistanceQuery {
+  search?: string
+  status?: AssistanceStatus
+  dateFrom?: string
+  dateTo?: string
+  amountMin?: string
+  amountMax?: string
+  page?: number
+  pageSize?: number
 }
-export async function listAdminAssistanceRequests(status?: AssistanceStatus) {
-  const { data } = await apiClient.get<{ data: AssistanceDto[] }>('/admin/assistance-requests/', {
-    params: { status, limit: 100 },
+async function listRequests(path: string, query: AssistanceQuery = {}) {
+  const page = query.page ?? 1
+  const pageSize = query.pageSize ?? 10
+  const { data } = await apiClient.get<{ data: AssistanceDto[]; total: number }>(path, {
+    params: {
+      search: query.search || undefined,
+      status: query.status,
+      date_from: query.dateFrom,
+      date_to: query.dateTo,
+      amount_min: query.amountMin,
+      amount_max: query.amountMax,
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    },
   })
-  return data.data.map(map)
+  return { items: data.data.map(map), total: data.total, page, pageSize }
+}
+export function listMyAssistanceRequests(query?: AssistanceQuery) {
+  return listRequests('/assistance-requests/', query)
+}
+export function listAdminAssistanceRequests(query?: AssistanceQuery) {
+  return listRequests('/admin/assistance-requests/', query)
 }
 export async function createAssistanceRequest(input: {
   amountRequested: string

@@ -198,6 +198,17 @@ const number = (value: unknown) => {
     throw new Error('Dashboard response contains an invalid numeric field.')
   return parsed
 }
+const numberOr = (value: unknown, fallback = 0) => {
+  if (value === undefined || value === null || value === '') return fallback
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+const monthlySeries = (value: unknown): Array<{ month: string; expected: number; paid: number }> =>
+  arrayData(value, 'items').map((item) => ({
+    month: text(item.month),
+    expected: numberOr(item.expected),
+    paid: numberOr(item.paid ?? item.collected),
+  }))
 const counts = (value: unknown) =>
   arrayData(value, 'items').map((item) => ({ name: text(item.name), count: number(item.count) }))
 const frequencies = (value: unknown) =>
@@ -212,9 +223,12 @@ const frequencies = (value: unknown) =>
     overdue: number(item.overdue),
     rejected: number(item.rejected),
   }))
-export async function getAdminDashboard(months: 6 | 12 = 6): Promise<AdminDashboardData> {
+export async function getAdminDashboard(
+  months: 6 | 10 = 6,
+  targetMonth?: string,
+): Promise<AdminDashboardData> {
   const { data } = await apiClient.get<ApiEnvelope<RecordDto>>('/admin/dashboard/', {
-    params: { months },
+    params: { months, target_month: targetMonth },
   })
   const value = data.data
   const summary = value.summary as RecordDto
@@ -236,10 +250,13 @@ export async function getAdminDashboard(months: 6 | 12 = 6): Promise<AdminDashbo
       assistanceApproved: number(summary.assistance_approved),
       notificationsFailed: number(summary.notifications_failed),
     },
-    contributionPerformance: frequencies(value.contribution_by_frequency).map((item) => ({
-      month: item.frequency,
-      expected: item.expected,
-      collected: item.paid,
+    contributionPerformance: arrayData(
+      value.contribution_performance ?? value.contributionPerformance,
+      'items',
+    ).map((item) => ({
+      month: text(item.month),
+      expected: numberOr(item.expected),
+      collected: numberOr(item.collected ?? item.paid),
     })),
     fundMovement: arrayData(value.fund_movement, 'items').map((item) => ({
       month: text(item.month),
@@ -256,6 +273,7 @@ export async function getMemberDashboard(): Promise<MemberDashboardData> {
   const { data } = await apiClient.get<ApiEnvelope<RecordDto>>('/dashboard/')
   const value = data.data
   const summary = value.summary as RecordDto
+  const history = monthlySeries(value.contribution_history)
   return {
     summary: {
       totalContributed: number(summary.total_contributed),
@@ -279,11 +297,14 @@ export async function getMemberDashboard(): Promise<MemberDashboardData> {
     effectiveOverdueDate: summary.effective_overdue_date
       ? text(summary.effective_overdue_date)
       : undefined,
-    contributionHistory: frequencies(value.contribution_by_frequency).map((item) => ({
-      month: item.frequency,
-      expected: item.expected,
-      paid: item.paid,
-    })),
+    contributionHistory:
+      history.length > 0
+        ? history
+        : frequencies(value.contribution_by_frequency).map((item) => ({
+            month: item.frequency,
+            expected: item.expected,
+            paid: item.paid,
+          })),
     paymentStatuses: counts(value.payment_statuses),
     assistanceStatuses: counts(value.assistance_statuses),
     recentContributions: arrayData(value.recent_contributions, 'items').map((item) => ({

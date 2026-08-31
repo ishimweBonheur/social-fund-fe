@@ -21,7 +21,7 @@ export function DashboardTooltip({
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border bg-card/95 px-3 py-2 text-xs shadow-card backdrop-blur">
+    <div className="rounded-xl bg-card/95 px-3 py-2 text-xs shadow-card backdrop-blur">
       <p className="mb-1 font-semibold">{label}</p>
       {payload.map((item) => (
         <p

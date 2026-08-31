@@ -10,7 +10,7 @@ export default function ContributionPaymentCard() {
   return (
     <Card className="mb-3">
       <CardContent className="flex flex-col items-center gap-4 p-4 sm:flex-row sm:items-center">
-        <div className="shrink-0 rounded-xl border bg-white p-2">
+        <div className="shrink-0 rounded-xl border bg-[#EAE0CF] p-2">
           <QRCodeSVG
             value={dialUrl}
             size={112}

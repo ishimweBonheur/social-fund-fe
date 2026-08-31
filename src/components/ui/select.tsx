@@ -13,8 +13,8 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex h-10 min-w-36 items-center justify-between gap-3 rounded-lg border border-border/90 bg-card px-3 text-sm font-medium text-foreground shadow-[0_1px_2px_rgba(20,20,40,0.03)] outline-none transition-colors dark:bg-muted/35 dark:shadow-inner',
-      'hover:border-muted-foreground/40 focus:border-primary focus:ring-3 focus:ring-primary/10 data-[placeholder]:text-muted-foreground',
+      'flex h-10 min-w-36 items-center justify-between gap-3 rounded-lg bg-card px-3 text-sm font-medium text-foreground shadow-[0_2px_10px_rgba(33,52,72,0.10)] outline-none transition-shadow dark:bg-muted/35 dark:shadow-inner',
+      'focus:ring-3 focus:ring-primary/20 data-[placeholder]:text-muted-foreground',
       className,
     )}
     {...props}
@@ -36,7 +36,7 @@ const SelectContent = React.forwardRef<
       ref={ref}
       position={position}
       className={cn(
-        'z-[70] max-h-80 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-border/80 bg-card text-card-foreground shadow-[0_16px_40px_-12px_rgba(28,23,66,0.3)] dark:bg-[#1a1a29] dark:shadow-[0_18px_48px_-12px_rgba(0,0,0,.75)]',
+        'z-[70] max-h-80 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg bg-card text-card-foreground shadow-[0_16px_40px_-12px_rgba(33,52,72,0.3)] dark:bg-[#213448] dark:shadow-[0_18px_48px_-12px_rgba(33,52,72,.75)]',
         'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
         className,
       )}

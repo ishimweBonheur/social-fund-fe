@@ -118,7 +118,7 @@ export default function DataPage({
           <p className="text-sm font-semibold">Unable to load {title.toLowerCase()}.</p>
           <p
             role="alert"
-            className="mt-1 text-xs text-red-700"
+            className="mt-1 text-xs text-destructive"
           >
             {remote.error}
           </p>

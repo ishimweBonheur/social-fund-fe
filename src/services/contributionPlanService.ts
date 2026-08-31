@@ -64,7 +64,18 @@ interface PlanListDto extends PlanDto {
   member_name: string
 }
 export async function listContributionPlansPage(
-  query: { search?: string; active?: boolean; page?: number; pageSize?: number } = {},
+  query: {
+    search?: string
+    active?: boolean
+    frequency?: string
+    reminderEnabled?: boolean
+    lateFeeEnabled?: boolean
+    dueDay?: string
+    amountMin?: string
+    amountMax?: string
+    page?: number
+    pageSize?: number
+  } = {},
 ) {
   const limit = query.pageSize ?? 10
   const page = query.page ?? 1
@@ -74,6 +85,12 @@ export async function listContributionPlansPage(
       params: {
         search: query.search || undefined,
         active: query.active,
+        frequency: query.frequency,
+        reminder_enabled: query.reminderEnabled,
+        late_fee_enabled: query.lateFeeEnabled,
+        due_day: query.dueDay || undefined,
+        amount_min: query.amountMin || undefined,
+        amount_max: query.amountMax || undefined,
         limit,
         offset: (page - 1) * limit,
       },

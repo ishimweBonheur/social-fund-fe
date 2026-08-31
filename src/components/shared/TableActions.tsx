@@ -47,7 +47,7 @@ export default function TableActions({ actions }: { actions: TableAction[] }) {
             <Fragment key={action.label}>
               {action.separator && <DropdownMenuSeparator />}
               <DropdownMenuItem
-                className={action.destructive ? 'text-red-700 focus:text-red-700' : ''}
+                className={action.destructive ? 'text-[#213448] focus:text-[#213448] dark:text-[#94B4C1] dark:focus:text-[#94B4C1]' : ''}
                 onSelect={action.onSelect}
               >
                 {action.label}

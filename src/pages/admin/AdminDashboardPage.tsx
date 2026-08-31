@@ -1,8 +1,10 @@
 import { useCallback, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
-  Area,
-  AreaChart,
   CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -11,14 +13,11 @@ import {
 import {
   ArrowDownRight,
   ArrowRight,
-  ArrowUpRight,
-  CalendarDays,
   CheckCircle2,
   CircleDollarSign,
   Clock3,
   Download,
   HandCoins,
-  MoreHorizontal,
   UsersRound,
   Wallet,
 } from 'lucide-react'
@@ -27,6 +26,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import TableActions from '@/components/shared/TableActions'
 import { useRemoteData } from '@/hooks/useRemoteData'
 import { chartTheme, formatCompact, formatCurrency } from '@/lib/dashboardChart'
 import { listPendingContributions } from '@/services/contributionService'
@@ -42,8 +42,11 @@ const initials = (name: string) =>
     .toUpperCase()
 
 export default function AdminDashboardPage() {
-  const [months, setMonths] = useState<6 | 12>(6)
-  const dashboard = useRemoteData(useCallback(() => getAdminDashboard(months), [months]))
+  const navigate = useNavigate()
+  const [targetMonth, setTargetMonth] = useState(() => new Date().toISOString().slice(0, 7))
+  const dashboard = useRemoteData(
+    useCallback(() => getAdminDashboard(6, targetMonth), [targetMonth]),
+  )
   const recentMembers = useRemoteData(useCallback(() => listMembers({ page: 1, pageSize: 4 }), []))
   const pending = useRemoteData(useCallback(() => listPendingContributions(4), []))
   if (dashboard.isLoading) return <DashboardLoading />
@@ -59,13 +62,23 @@ export default function AdminDashboardPage() {
 
   const { summary: s } = dashboard.data
   const rate = s.expectedMonth > 0 ? Math.min(100, (s.collectedMonth / s.expectedMonth) * 100) : 0
+  const contributionPerformance = dashboard.data.contributionByFrequency.map((item) => ({
+    period: item.frequency
+      .toLowerCase()
+      .replaceAll('_', ' ')
+      .replace(/^./, (letter) => letter.toUpperCase()),
+    expected: item.expected,
+    collected: item.paid,
+  }))
+  const periodCollected = contributionPerformance.reduce((total, item) => total + item.collected, 0)
   const metrics = [
     {
       label: 'Fund balance',
       value: formatCurrency(s.fundBalance),
       note: `${formatCurrency(s.fundInflow)} inflow`,
       icon: Wallet,
-      trend: '+8.4%',
+      context: 'Net available',
+      to: '/admin/repayments',
       tone: 'bg-primary/10 text-primary',
     },
     {
@@ -73,24 +86,29 @@ export default function AdminDashboardPage() {
       value: formatCurrency(s.collectedMonth),
       note: `${rate.toFixed(1)}% of expected`,
       icon: CircleDollarSign,
-      trend: '+12.6%',
-      tone: 'bg-[#f2a93b]/15 text-[#d58a16]',
+      context: 'This month',
+      to: '/admin/contributions',
+      tone: 'bg-[#94B4C1]/25 text-[#547792]',
     },
     {
       label: 'Active members',
       value: s.membersActive.toLocaleString(),
       note: `${s.membersTotal} total members`,
       icon: UsersRound,
-      trend: '+5.7%',
-      tone: 'bg-[#4da3ff]/15 text-[#3789db]',
+      context: s.membersTotal
+        ? `${((s.membersActive / s.membersTotal) * 100).toFixed(0)}% active`
+        : 'No members',
+      to: '/admin/members',
+      tone: 'bg-[#547792]/15 text-[#547792]',
     },
     {
       label: 'Assistance approved',
       value: s.assistanceApproved.toLocaleString(),
       note: `${s.assistancePending} awaiting review`,
       icon: HandCoins,
-      trend: '+9.3%',
-      tone: 'bg-[#ed5d71]/15 text-[#dc4960]',
+      context: `${s.assistancePending} pending`,
+      to: '/admin/loans',
+      tone: 'bg-[#213448]/10 text-[#213448] dark:text-[#94B4C1]',
     },
   ]
 
@@ -107,13 +125,13 @@ export default function AdminDashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            className="h-10"
-          >
-            <CalendarDays className="h-4 w-4" />
-            Last {months} months
-          </Button>
+          <input
+            type="month"
+            value={targetMonth}
+            onChange={(event) => setTargetMonth(event.target.value)}
+            aria-label="Target month"
+            className="h-10 rounded-lg bg-card px-3 text-sm shadow-sm outline-none focus:ring-3 focus:ring-primary/20"
+          />
           <Button className="h-10">
             <Download className="h-4 w-4" />
             Export report
@@ -122,26 +140,22 @@ export default function AdminDashboardPage() {
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map(({ label, value, note, icon: Icon, trend, tone }) => (
-          <Card
-            key={label}
-            className="group overflow-hidden shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/25"
-          >
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <span className={`grid h-10 w-10 place-items-center rounded-xl ${tone}`}>
-                  <Icon className="h-5 w-5" />
-                </span>
-                <span className="flex items-center text-xs font-semibold text-primary">
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                  {trend}
-                </span>
-              </div>
-              <p className="mt-5 text-sm text-muted-foreground">{label}</p>
-              <p className="mt-1 truncate text-2xl font-bold tracking-tight">{value}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{note}</p>
-            </CardContent>
-          </Card>
+        {metrics.map(({ label, value, note, icon: Icon, context, tone, to }) => (
+          <button key={label} type="button" onClick={() => navigate(to)} className="text-left">
+            <Card className="group h-full overflow-hidden shadow-card transition-all hover:-translate-y-0.5 hover:shadow-soft">
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <span className={`grid h-10 w-10 place-items-center rounded-xl ${tone}`}>
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span className="text-xs font-medium text-muted-foreground">{context}</span>
+                </div>
+                <p className="mt-5 text-sm text-muted-foreground">{label}</p>
+                <p className="mt-1 truncate text-2xl font-bold tracking-tight">{value}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{note}</p>
+              </CardContent>
+            </Card>
+          </button>
         ))}
       </section>
 
@@ -149,82 +163,75 @@ export default function AdminDashboardPage() {
         <Card className="min-w-0 shadow-card">
           <CardHeader className="flex-row items-center justify-between space-y-0 p-5 pb-1">
             <div>
-              <CardTitle>Contribution performance</CardTitle>
+              <CardTitle>Contribution plans</CardTitle>
               <p className="mt-1 text-xs text-muted-foreground">
-                Expected versus collected contributions
+                Expected versus collected by payment period
               </p>
-            </div>
-            <div className="flex rounded-lg bg-muted p-1">
-              {([6, 12] as const).map((value) => (
-                <button
-                  key={value}
-                  onClick={() => setMonths(value)}
-                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${months === value ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'}`}
-                >
-                  {value}M
-                </button>
-              ))}
+              <p className="mt-3 text-xl font-bold">{formatCurrency(periodCollected)}</p>
             </div>
           </CardHeader>
           <CardContent className="h-[310px] min-w-0 p-3 pt-5 sm:p-5">
-            <ResponsiveContainer>
-              <AreaChart data={dashboard.data.contributionPerformance}>
-                <defs>
-                  <linearGradient
-                    id="collectedFill"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="0%"
-                      stopColor={chartTheme.primary}
-                      stopOpacity={0.3}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor={chartTheme.primary}
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  vertical={false}
-                  stroke={chartTheme.grid}
-                  strokeDasharray="3 5"
-                />
-                <XAxis
-                  dataKey="month"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11 }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={formatCompact}
-                  tick={{ fontSize: 11 }}
-                  width={45}
-                />
-                <Tooltip content={<DashboardTooltip currency />} />
-                <Area
-                  type="monotone"
-                  dataKey="expected"
-                  stroke="#f2a93b"
-                  strokeWidth={2}
-                  fill="transparent"
-                  strokeDasharray="5 5"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="collected"
-                  stroke={chartTheme.primary}
-                  strokeWidth={2.5}
-                  fill="url(#collectedFill)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {contributionPerformance.length ? (
+              <ResponsiveContainer
+                width="100%"
+                height={275}
+              >
+                <LineChart
+                  data={contributionPerformance}
+                  margin={{ top: 8, right: 10, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    vertical={false}
+                    stroke={chartTheme.grid}
+                    strokeDasharray="3 5"
+                  />
+                  <XAxis
+                    dataKey="period"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11 }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={formatCompact}
+                    tick={{ fontSize: 11 }}
+                    width={45}
+                  />
+                  <Tooltip content={<DashboardTooltip currency />} />
+                  <Legend
+                    verticalAlign="top"
+                    align="right"
+                    iconType="circle"
+                    iconSize={7}
+                    wrapperStyle={{ fontSize: 11, paddingBottom: 12 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="expected"
+                    name="Expected"
+                    stroke="#94B4C1"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={{ r: 3, fill: '#EAE0CF', strokeWidth: 2 }}
+                    activeDot={{ r: 5 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="collected"
+                    name="Collected"
+                    stroke={chartTheme.primary}
+                    strokeWidth={3}
+                    dot={{ r: 3.5, fill: '#547792', strokeWidth: 0 }}
+                    activeDot={{ r: 5 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="grid h-full place-items-center rounded-xl bg-muted/40 px-6 text-center text-sm text-muted-foreground">
+                No contribution data yet.
+              </div>
+            )}
           </CardContent>
         </Card>
         <Card className="overflow-hidden shadow-card">
@@ -268,6 +275,7 @@ export default function AdminDashboardPage() {
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => navigate('/admin/members')}
             >
               View all <ArrowRight className="h-3.5 w-3.5" />
             </Button>
@@ -290,7 +298,14 @@ export default function AdminDashboardPage() {
                 <Badge className="border-0 bg-primary/10 text-primary shadow-none">
                   {member.status}
                 </Badge>
-                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                <TableActions
+                  actions={[
+                    {
+                      label: 'View member',
+                      onSelect: () => navigate('/admin/members', { state: { member } }),
+                    },
+                  ]}
+                />
               </div>
             ))}
           </CardContent>
@@ -298,7 +313,7 @@ export default function AdminDashboardPage() {
         <Card className="shadow-card">
           <CardHeader className="flex-row items-center justify-between space-y-0 p-5 pb-2">
             <CardTitle>Pending contributions</CardTitle>
-            <Badge className="border-0 bg-[#f2a93b]/15 text-[#c77d0b] shadow-none">
+            <Badge className="border-0 bg-[#94B4C1]/25 text-[#547792] shadow-none">
               {s.pendingContributions} pending
             </Badge>
           </CardHeader>
@@ -308,7 +323,7 @@ export default function AdminDashboardPage() {
                 key={item.id ?? index}
                 className="flex items-center gap-3 rounded-xl p-3 transition hover:bg-muted/70"
               >
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#f2a93b]/15 text-[#cf8615]">
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#94B4C1]/25 text-[#547792]">
                   <Clock3 className="h-4 w-4" />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -326,10 +341,13 @@ export default function AdminDashboardPage() {
                   <p className="text-sm font-bold">
                     {formatCurrency(Number(item.paidAmount ?? item.totalDue))}
                   </p>
-                  <p className="flex items-center justify-end text-[11px] text-[#c77d0b]">
-                    <ArrowDownRight className="h-3 w-3" />
-                    Review
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => item.id && navigate(`/admin/contributions/${item.id}/review`)}
+                    className="flex items-center justify-end text-[11px] text-[#547792] hover:underline"
+                  >
+                    <ArrowDownRight className="h-3 w-3" /> Review
+                  </button>
                 </div>
               </div>
             ))}

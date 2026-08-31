@@ -37,7 +37,7 @@ export default function Pagination({
   const pages = Math.max(1, Math.ceil(total / pageSize))
   if (total === 0) return null
   return (
-    <div className="flex flex-col gap-3 border-t border-border/60 bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 bg-card px-4 py-3 shadow-[0_-8px_20px_-22px_rgba(33,52,72,.7)] sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span>
           Showing{' '}

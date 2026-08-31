@@ -13,7 +13,7 @@ export default function GoogleLoginButton({
 }: GoogleLoginButtonProps) {
   if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
     return (
-      <p className="rounded-xl bg-amber-50 p-3 text-xs text-amber-800">
+      <p className="rounded-xl bg-[#94B4C1]/25 p-3 text-xs text-[#213448] dark:text-[#EAE0CF]">
         Google login is unavailable. Set VITE_GOOGLE_CLIENT_ID.
       </p>
     )

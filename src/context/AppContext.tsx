@@ -11,6 +11,7 @@ import { authenticateWithGoogle, endSession, getCurrentUser } from '@/services/a
 import { authStorage } from '@/services/authStorage'
 import {
   listNotifications,
+  subscribeNotifications,
   readAllNotifications,
   readNotification,
 } from '@/services/notificationService'
@@ -106,20 +107,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .then(setNotifications)
       .catch(() => setNotifications([]))
   }, [currentUser])
+  const currentUserID = currentUser?.id
   useEffect(() => {
-    if (!currentUser) return
+    if (!currentUserID) return
     let active = true
     void listNotifications()
       .then((items) => {
         if (active) setNotifications(items)
       })
-      .catch(() => {
-        if (active) setNotifications([])
-      })
+      .catch(() => undefined)
+    const unsubscribe = subscribeNotifications((items) => {
+      if (active) setNotifications(items)
+    })
     return () => {
       active = false
+      unsubscribe()
     }
-  }, [currentUser])
+  }, [currentUserID])
   const value = useMemo(
     () => ({
       currentUser,

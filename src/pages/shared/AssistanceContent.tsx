@@ -6,6 +6,7 @@ import EmptyState from '@/components/shared/EmptyState'
 import FilterDialog from '@/components/shared/FilterDialog'
 import SupportRequestDialog from '@/components/shared/SupportRequestDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
+import Pagination from '@/components/shared/Pagination'
 import StatusBadge from '@/components/shared/StatusBadge'
 import TableActions from '@/components/shared/TableActions'
 import { Button } from '@/components/ui/button'
@@ -52,7 +53,6 @@ import {
 const money = (value?: string) => (value ? `RWF ${Number(value).toLocaleString()}` : '—')
 type Mode = 'create' | 'approve' | 'reject' | 'pay'
 export default function AssistanceContent({ admin = false }: { admin?: boolean }) {
-  const remote = useRemoteData(admin ? listAdminAssistanceRequests : listMyAssistanceRequests)
   const [selected, setSelected] = useState<AssistanceRequest>()
   const [target, setTarget] = useState<AssistanceRequest>()
   const [supportTarget, setSupportTarget] = useState<AssistanceRequest>()
@@ -61,6 +61,19 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const loader = useMemo(
+    () => () =>
+      (admin ? listAdminAssistanceRequests : listMyAssistanceRequests)({
+        search: search || undefined,
+        status: statusFilter === 'ALL' ? undefined : (statusFilter as AssistanceRequest['status']),
+        page,
+        pageSize,
+      }),
+    [admin, search, statusFilter, page, pageSize],
+  )
+  const remote = useRemoteData(loader)
   const [form, setForm] = useState({
     amount: '',
     reason: '',
@@ -131,20 +144,8 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
       setBusy(false)
     }
   }
-  const items = useMemo(() => remote.data ?? [], [remote.data])
-  const statuses = useMemo(() => [...new Set(items.map((item) => item.status))].sort(), [items])
-  const filteredItems = useMemo(
-    () =>
-      items.filter(
-        (item) =>
-          (statusFilter === 'ALL' || item.status === statusFilter) &&
-          (!search ||
-            [item.memberName, item.reason, item.status].some((value) =>
-              value?.toLowerCase().includes(search.toLowerCase()),
-            )),
-      ),
-    [items, search, statusFilter],
-  )
+  const items = useMemo(() => remote.data?.items ?? [], [remote.data])
+  const filteredItems = items
   return (
     <div>
       <PageHeader
@@ -195,13 +196,11 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
           }
         />
       ) : (
-        <Card className="overflow-hidden border-border/70 shadow-card">
+        <Card className="overflow-hidden shadow-card">
           <div className="border-b border-border/60 p-4 sm:p-5">
             <div className="mb-4">
               <p className="text-base font-bold">Assistance directory</p>
-              <p className="text-xs text-muted-foreground">
-                {filteredItems.length} of {items.length} requests
-              </p>
+              <p className="text-xs text-muted-foreground">{remote.data?.total ?? 0} requests</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <div className="relative min-w-0 flex-1">
@@ -209,7 +208,10 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
                 <Input
                   className="pl-10"
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event) => {
+                    setSearch(event.target.value)
+                    setPage(1)
+                  }}
                   placeholder="Search member or reason..."
                 />
               </div>
@@ -222,14 +224,17 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
                   <p className="mb-2 text-xs font-semibold">Request status</p>
                   <Select
                     value={statusFilter}
-                    onValueChange={setStatusFilter}
+                    onValueChange={(value) => {
+                      setStatusFilter(value)
+                      setPage(1)
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ALL">All statuses</SelectItem>
-                      {statuses.map((status) => (
+                      {['PENDING', 'APPROVED', 'REJECTED', 'PAID', 'CANCELLED'].map((status) => (
                         <SelectItem
                           key={status}
                           value={status}
@@ -311,6 +316,16 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
               </TableBody>
             </Table>
           </CardContent>
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={remote.data?.total ?? 0}
+            onPageChange={setPage}
+            onPageSizeChange={(value) => {
+              setPageSize(value)
+              setPage(1)
+            }}
+          />
         </Card>
       )}
       {!admin && items.some((item) => item.status === 'PENDING' || item.status === 'APPROVED') && (
@@ -461,7 +476,7 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
                   </div>
                 </>
               )}
-              {error && <p className="text-xs text-red-700">{error}</p>}
+              {error && <p className="text-xs text-destructive">{error}</p>}
             </div>
             <DialogFooter>
               <Button
@@ -473,7 +488,7 @@ export default function AssistanceContent({ admin = false }: { admin?: boolean }
               </Button>
               <Button
                 disabled={busy || (mode === 'reject' && !form.reason.trim())}
-                className={mode === 'reject' ? 'bg-red-600 hover:bg-red-700' : ''}
+                className={mode === 'reject' ? 'bg-[#213448] text-[#EAE0CF] hover:bg-[#547792]' : ''}
               >
                 {busy
                   ? 'Submitting…'

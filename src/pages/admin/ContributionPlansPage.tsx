@@ -74,10 +74,17 @@ export default function ContributionPlansPage() {
     () =>
       listContributionPlansPage({
         search,
-        page: 1,
-        pageSize: 100,
+        active: active === 'ALL' ? undefined : active === 'ACTIVE',
+        frequency: frequency === 'ALL' ? undefined : frequency,
+        reminderEnabled: reminders === 'ALL' ? undefined : reminders === 'ENABLED',
+        lateFeeEnabled: lateFees === 'ALL' ? undefined : lateFees === 'ENABLED',
+        dueDay: dueDay || undefined,
+        amountMin: amountMin || undefined,
+        amountMax: amountMax || undefined,
+        page,
+        pageSize: 10,
       }),
-    [search],
+    [search, active, frequency, reminders, lateFees, dueDay, amountMin, amountMax, page],
   )
   const remote = useRemoteData(loader)
   const [selected, setSelected] = useState<ContributionPlan>()
@@ -86,23 +93,7 @@ export default function ContributionPlansPage() {
   const [fieldError, setFieldError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const plans = useMemo(() => remote.data?.items ?? [], [remote.data])
-  const filteredPlans = useMemo(
-    () =>
-      plans.filter((plan) => {
-        const amount = Number(plan.amount)
-        return (
-          (active === 'ALL' || plan.isActive === (active === 'ACTIVE')) &&
-          (frequency === 'ALL' || plan.frequency === frequency) &&
-          (reminders === 'ALL' || plan.reminderEnabled === (reminders === 'ENABLED')) &&
-          (lateFees === 'ALL' || plan.lateFeeEnabled === (lateFees === 'ENABLED')) &&
-          (!amountMin || amount >= Number(amountMin)) &&
-          (!amountMax || amount <= Number(amountMax)) &&
-          (!dueDay || plan.dueDay === Number(dueDay))
-        )
-      }),
-    [plans, active, frequency, reminders, lateFees, amountMin, amountMax, dueDay],
-  )
-  const displayedPlans = filteredPlans.slice((page - 1) * 10, page * 10)
+  const displayedPlans = plans
   const filterCount = [
     active !== 'ALL',
     frequency !== 'ALL',
@@ -183,7 +174,7 @@ export default function ContributionPlansPage() {
         </select>
       </div>
       {remote.isLoading ? (
-        <Card className="overflow-hidden border-border/70 shadow-card">
+        <Card className="overflow-hidden shadow-card">
           <CardContent className="space-y-3 p-4">
             {Array.from({ length: 5 }, (_, index) => (
               <div
@@ -196,7 +187,7 @@ export default function ContributionPlansPage() {
       ) : remote.error ? (
         <div className="rounded-2xl border bg-card p-8 text-center">
           <p className="text-sm font-semibold">Unable to load contribution plans.</p>
-          <p className="mt-1 text-xs text-red-700">{remote.error}</p>
+          <p className="mt-1 text-xs text-destructive">{remote.error}</p>
           <Button
             className="mt-4"
             variant="outline"
@@ -215,13 +206,11 @@ export default function ContributionPlansPage() {
           }
         />
       ) : (
-        <Card className="overflow-hidden border-border/70 shadow-card">
+        <Card className="overflow-hidden shadow-card">
           <div className="border-b border-border/60 p-4 sm:p-5">
             <div className="mb-4">
               <p className="text-base font-bold">Contribution plans</p>
-              <p className="text-xs text-muted-foreground">
-                {filteredPlans.length} of {plans.length} plans
-              </p>
+              <p className="text-xs text-muted-foreground">{remote.data?.total ?? 0} plans</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
@@ -413,7 +402,7 @@ export default function ContributionPlansPage() {
           <ServerPagination
             page={page}
             pageSize={10}
-            total={filteredPlans.length}
+            total={remote.data?.total ?? 0}
             onPageChange={setPage}
           />
         </Card>
@@ -584,7 +573,7 @@ export default function ContributionPlansPage() {
                     />
                   </div>
                 )}
-                {fieldError && <p className="text-xs text-red-700 sm:col-span-2">{fieldError}</p>}
+                {fieldError && <p className="text-xs text-destructive sm:col-span-2">{fieldError}</p>}
               </div>
             )}
             <DialogFooter>

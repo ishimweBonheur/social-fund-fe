@@ -50,7 +50,7 @@ export default function LoginPage() {
           {error && (
             <p
               role="alert"
-              className="rounded-lg border border-red-200/70 bg-red-50 p-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300"
+              className="rounded-lg border border-[#547792]/40 bg-[#94B4C1]/25 p-3 text-sm text-[#213448] dark:text-[#EAE0CF]"
             >
               {error}
             </p>

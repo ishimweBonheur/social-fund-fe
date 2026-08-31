@@ -55,13 +55,13 @@ export default function ContributionReviewPage() {
       />
       {invalid ? (
         <Card>
-          <CardContent className="p-6 text-sm text-red-700">
+          <CardContent className="p-6 text-sm text-destructive">
             This review link is invalid.
           </CardContent>
         </Card>
       ) : error ? (
         <Card>
-          <CardContent className="p-6 text-sm text-red-700">{error}</CardContent>
+          <CardContent className="p-6 text-sm text-destructive">{error}</CardContent>
         </Card>
       ) : !review ? (
         <Card>
@@ -115,7 +115,7 @@ export default function ContributionReviewPage() {
               </Button>
               <Button
                 disabled={busy || (action === 'reject' && !reason.trim())}
-                className={action === 'reject' ? 'bg-red-600 hover:bg-red-700' : ''}
+                className={action === 'reject' ? 'bg-[#213448] text-[#EAE0CF] hover:bg-[#547792]' : ''}
                 onClick={() => void confirm()}
               >
                 {busy

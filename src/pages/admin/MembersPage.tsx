@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import { useLocation } from 'react-router-dom'
 import {
   Download,
   Plus,
@@ -77,8 +78,8 @@ const contributionFrequencies: ContributionFrequency[] = ['DAILY', 'WEEKLY', 'MO
 const reminderFrequencies: ReminderFrequency[] = ['DAILY', 'WEEKLY', 'CUSTOM']
 
 export default function MembersPage() {
-  const { members, isLoading, error, setError, reload, create, update, find, changeStatus } =
-    useMembers()
+  const location = useLocation()
+  const routedMember = (location.state as { member?: Member } | null)?.member
   const [form, setForm] = useState<MemberInput>(emptyForm)
   const [editingId, setEditingId] = useState<string>()
   const [showForm, setShowForm] = useState(false)
@@ -89,25 +90,24 @@ export default function MembersPage() {
   const [status, setStatus] = useState<'ALL' | Member['status']>('ALL')
   const [joinedFrom, setJoinedFrom] = useState('')
   const [joinedTo, setJoinedTo] = useState('')
-  const [selected, setSelected] = useState<Member>()
+  const memberQuery = useMemo(
+    () => ({
+      search,
+      status: status === 'ALL' ? undefined : status,
+      joinedFrom: joinedFrom || undefined,
+      joinedTo: joinedTo || undefined,
+      page,
+      pageSize,
+    }),
+    [search, status, joinedFrom, joinedTo, page, pageSize],
+  )
+  const { members, total, isLoading, error, setError, reload, create, update, find, changeStatus } =
+    useMembers(memberQuery)
+  const [selected, setSelected] = useState<Member | undefined>(routedMember)
   const [statusTarget, setStatusTarget] = useState<Member>()
   const [fieldError, setFieldError] = useState('')
-  const filteredMembers = useMemo(
-    () =>
-      members.filter((member) => {
-        const joined = member.createdAt.slice(0, 10)
-        return (
-          (status === 'ALL' || member.status === status) &&
-          (!joinedFrom || joined >= joinedFrom) &&
-          (!joinedTo || joined <= joinedTo)
-        )
-      }),
-    [members, status, joinedFrom, joinedTo],
-  )
-  const displayedMembers = useMemo(
-    () => filteredMembers.slice((page - 1) * pageSize, page * pageSize),
-    [filteredMembers, page, pageSize],
-  )
+  const filteredMembers = members
+  const displayedMembers = members
   const activeCount = members.filter((member) => member.status === 'ACTIVE').length
   const suspendedCount = members.filter((member) => member.status === 'SUSPENDED').length
   const inactiveCount = members.filter((member) => member.status === 'INACTIVE').length
@@ -257,14 +257,14 @@ export default function MembersPage() {
               ? `${((activeCount / members.length) * 100).toFixed(1)}% of total`
               : 'No members yet',
             UserCheck,
-            'bg-blue-500/10 text-blue-600',
+            'bg-[#547792]/15 text-[#547792]',
           ],
           [
             'Inactive members',
             inactiveCount,
             'Require attention',
             RefreshCw,
-            'bg-amber-500/10 text-amber-600',
+            'bg-[#94B4C1]/25 text-[#547792]',
           ],
           [
             'Suspended members',
@@ -297,7 +297,7 @@ export default function MembersPage() {
       {error && (
         <p
           role="alert"
-          className="mb-3 rounded-xl bg-red-50 p-3 text-sm text-red-700"
+          className="mb-3 rounded-xl bg-[#94B4C1]/25 p-3 text-sm text-[#213448] dark:text-[#EAE0CF]"
         >
           {error}
         </p>
@@ -569,7 +569,7 @@ export default function MembersPage() {
                   )}
                 </>
               )}
-              {fieldError && <p className="text-xs text-red-700 sm:col-span-2">{fieldError}</p>}
+              {fieldError && <p className="text-xs text-destructive sm:col-span-2">{fieldError}</p>}
             </div>
             <DialogFooter>
               <Button
@@ -593,7 +593,7 @@ export default function MembersPage() {
           </form>
         </DialogContent>
       </Dialog>
-      <Card className="overflow-hidden border-border/70 shadow-card">
+      <Card className="overflow-hidden shadow-card">
         <div className="flex flex-col gap-4 border-b border-border/60 p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -820,7 +820,7 @@ export default function MembersPage() {
           <Pagination
             page={page}
             pageSize={pageSize}
-            total={filteredMembers.length}
+            total={total}
             onPageChange={setPage}
             onPageSizeChange={(size) => {
               setPageSize(size)

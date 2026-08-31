@@ -85,7 +85,23 @@ export async function listPendingContributions(limit = 100) {
   return data.data.map(map)
 }
 export async function listAdminContributions(
-  query: { search?: string; status?: ContributionStatus; page?: number; pageSize?: number } = {},
+  query: {
+    search?: string
+    status?: ContributionStatus
+    dueFrom?: string
+    dueTo?: string
+    method?: string
+    proof?: string
+    paymentState?: string
+    lateFee?: string
+    reference?: string
+    paidFrom?: string
+    paidTo?: string
+    amountMin?: string
+    amountMax?: string
+    page?: number
+    pageSize?: number
+  } = {},
 ) {
   const limit = query.pageSize ?? 10
   const page = query.page ?? 1
@@ -95,6 +111,17 @@ export async function listAdminContributions(
       params: {
         search: query.search || undefined,
         status: query.status,
+        due_from: query.dueFrom,
+        due_to: query.dueTo,
+        method: query.method,
+        proof: query.proof,
+        payment_state: query.paymentState,
+        late_fee: query.lateFee,
+        reference: query.reference,
+        paid_from: query.paidFrom,
+        paid_to: query.paidTo,
+        amount_min: query.amountMin,
+        amount_max: query.amountMax,
         limit,
         offset: (page - 1) * limit,
       },
