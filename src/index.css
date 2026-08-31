@@ -1,20 +1,20 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: #EAE0CF;
+  --color-background: #eae0cf;
   --color-foreground: #213448;
-  --color-card: color-mix(in srgb, #EAE0CF 86%, #94B4C1);
+  --color-card: color-mix(in srgb, #eae0cf 86%, #94b4c1);
   --color-card-foreground: #213448;
-  --color-muted: color-mix(in srgb, #EAE0CF 72%, #94B4C1);
+  --color-muted: color-mix(in srgb, #eae0cf 72%, #94b4c1);
   --color-muted-foreground: #547792;
-  --color-border: #94B4C1;
-  --color-surface-raised: #EAE0CF;
+  --color-border: #94b4c1;
+  --color-surface-raised: #eae0cf;
   --color-primary: #547792;
-  --color-primary-foreground: #EAE0CF;
-  --color-secondary: #94B4C1;
-  --color-accent: color-mix(in srgb, #94B4C1 42%, #EAE0CF);
+  --color-primary-foreground: #eae0cf;
+  --color-secondary: #94b4c1;
+  --color-accent: color-mix(in srgb, #94b4c1 42%, #eae0cf);
   --color-accent-foreground: #213448;
   --color-destructive: #213448;
   --color-ring: #547792;
@@ -25,28 +25,36 @@
   --radius-2xl: 1.5rem;
   --radius-3xl: 2rem;
   --font-sans: 'Manrope Variable', Manrope, ui-sans-serif, system-ui, sans-serif;
-  --shadow-soft: 0 4px 24px -4px color-mix(in srgb, #213448 12%, transparent), 0 2px 8px -2px color-mix(in srgb, #213448 8%, transparent);
-  --shadow-card: 0 1px 2px color-mix(in srgb, #213448 8%, transparent), 0 12px 32px -12px color-mix(in srgb, #213448 22%, transparent);
+  --shadow-soft:
+    0 4px 24px -4px color-mix(in srgb, #213448 12%, transparent),
+    0 2px 8px -2px color-mix(in srgb, #213448 8%, transparent);
+  --shadow-card:
+    0 1px 2px color-mix(in srgb, #213448 8%, transparent),
+    0 12px 32px -12px color-mix(in srgb, #213448 22%, transparent);
 }
 
 .dark {
   --color-background: #213448;
-  --color-foreground: #EAE0CF;
+  --color-foreground: #eae0cf;
   --color-card: color-mix(in srgb, #213448 82%, #547792);
-  --color-card-foreground: #EAE0CF;
+  --color-card-foreground: #eae0cf;
   --color-muted: color-mix(in srgb, #213448 62%, #547792);
-  --color-muted-foreground: #94B4C1;
+  --color-muted-foreground: #94b4c1;
   --color-border: #547792;
   --color-surface-raised: color-mix(in srgb, #213448 70%, #547792);
-  --color-primary: #94B4C1;
+  --color-primary: #94b4c1;
   --color-primary-foreground: #213448;
   --color-secondary: #547792;
   --color-accent: color-mix(in srgb, #547792 58%, #213448);
-  --color-accent-foreground: #EAE0CF;
-  --color-destructive: #94B4C1;
-  --color-ring: #94B4C1;
-  --shadow-soft: 0 4px 24px -4px color-mix(in srgb, #213448 75%, transparent), 0 2px 8px -2px color-mix(in srgb, #213448 55%, transparent);
-  --shadow-card: 0 1px 3px color-mix(in srgb, #213448 55%, transparent), 0 8px 24px -6px color-mix(in srgb, #213448 75%, transparent);
+  --color-accent-foreground: #eae0cf;
+  --color-destructive: #94b4c1;
+  --color-ring: #94b4c1;
+  --shadow-soft:
+    0 4px 24px -4px color-mix(in srgb, #213448 75%, transparent),
+    0 2px 8px -2px color-mix(in srgb, #213448 55%, transparent);
+  --shadow-card:
+    0 1px 3px color-mix(in srgb, #213448 55%, transparent),
+    0 8px 24px -6px color-mix(in srgb, #213448 75%, transparent);
 }
 
 @layer base {
@@ -67,8 +75,14 @@
     min-height: 100vh;
     overflow-x: hidden;
     overflow-x: clip;
-    background-image: radial-gradient(circle at 72% -10%, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 30rem);
-    transition: background-color 180ms ease, color 180ms ease;
+    background-image: radial-gradient(
+      circle at 72% -10%,
+      color-mix(in srgb, var(--color-primary) 10%, transparent),
+      transparent 30rem
+    );
+    transition:
+      background-color 180ms ease,
+      color 180ms ease;
   }
 
   html.dark {
@@ -77,8 +91,16 @@
 
   html.dark body {
     background-image:
-      radial-gradient(circle at 70% -8%, color-mix(in srgb, var(--color-primary) 15%, transparent), transparent 34rem),
-      radial-gradient(circle at 8% 92%, color-mix(in srgb, #94B4C1 8%, transparent), transparent 28rem);
+      radial-gradient(
+        circle at 70% -8%,
+        color-mix(in srgb, var(--color-primary) 15%, transparent),
+        transparent 34rem
+      ),
+      radial-gradient(
+        circle at 8% 92%,
+        color-mix(in srgb, #94b4c1 8%, transparent),
+        transparent 28rem
+      );
   }
 
   ::selection {
@@ -98,7 +120,10 @@
     color: var(--color-foreground);
     box-shadow: 0 1px 2px color-mix(in srgb, #213448 8%, transparent);
     outline: none;
-    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      background-color 160ms ease;
   }
 
   select:focus,
@@ -126,13 +151,13 @@
   }
 
   html:not(.dark) textarea {
-    background-color: #EAE0CF !important;
+    background-color: #eae0cf !important;
     color: #213448 !important;
   }
 
   html.dark textarea {
     background-color: #213448 !important;
-    color: #EAE0CF !important;
+    color: #eae0cf !important;
   }
 
   input[type='checkbox'] {
@@ -170,4 +195,71 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Sonner's default rich colors are too muted against this application's sand
+   and navy surfaces. These semantic colors retain strong contrast in both themes. */
+.app-toaster .app-toast {
+  border-width: 1px !important;
+  border-style: solid !important;
+  box-shadow: 0 16px 36px -18px rgba(15, 23, 42, 0.65) !important;
+  font-family: var(--font-sans) !important;
+}
+
+.app-toaster .app-toast-title {
+  color: inherit !important;
+  font-weight: 800 !important;
+}
+
+.app-toaster .app-toast-description {
+  color: inherit !important;
+  opacity: 0.88 !important;
+}
+
+.app-toaster .app-toast-success {
+  border-color: #15803d !important;
+  background: #f0fdf4 !important;
+  color: #14532d !important;
+}
+
+.app-toaster .app-toast-error {
+  border-color: #b91c1c !important;
+  background: #fef2f2 !important;
+  color: #7f1d1d !important;
+}
+
+.app-toaster .app-toast-warning {
+  border-color: #b45309 !important;
+  background: #fffbeb !important;
+  color: #78350f !important;
+}
+
+.app-toaster .app-toast-info {
+  border-color: #0369a1 !important;
+  background: #f0f9ff !important;
+  color: #0c4a6e !important;
+}
+
+.dark .app-toaster .app-toast-success {
+  border-color: #4ade80 !important;
+  background: #052e16 !important;
+  color: #dcfce7 !important;
+}
+
+.dark .app-toaster .app-toast-error {
+  border-color: #f87171 !important;
+  background: #450a0a !important;
+  color: #fee2e2 !important;
+}
+
+.dark .app-toaster .app-toast-warning {
+  border-color: #fbbf24 !important;
+  background: #451a03 !important;
+  color: #fef3c7 !important;
+}
+
+.dark .app-toaster .app-toast-info {
+  border-color: #38bdf8 !important;
+  background: #082f49 !important;
+  color: #e0f2fe !important;
 }

@@ -171,9 +171,22 @@ export default function App() {
         <AppRoutes />
       </BrowserRouter>
       <Toaster
+        className="app-toaster"
         position="top-right"
         richColors
         closeButton
+        toastOptions={{
+          duration: 5000,
+          classNames: {
+            toast: 'app-toast',
+            title: 'app-toast-title',
+            description: 'app-toast-description',
+            success: 'app-toast-success',
+            error: 'app-toast-error',
+            warning: 'app-toast-warning',
+            info: 'app-toast-info',
+          },
+        }}
       />
     </AppProvider>
   )

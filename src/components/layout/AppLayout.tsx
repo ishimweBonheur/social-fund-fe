@@ -5,6 +5,7 @@ import { Header } from './Header'
 import { MobileNav } from './MobileNav'
 import { Sidebar } from './Sidebar'
 import { Breadcrumbs } from './Breadcrumbs'
+import OverdueContributionBanner from '@/components/member/OverdueContributionBanner'
 
 export function AppLayout() {
   const [sidebarExpanded, setSidebarExpanded] = useState(
@@ -50,6 +51,7 @@ export function AppLayout() {
       >
         <div className="mx-auto w-full min-w-0 max-w-[1600px]">
           <Breadcrumbs />
+          <OverdueContributionBanner />
           <Outlet />
         </div>
       </main>

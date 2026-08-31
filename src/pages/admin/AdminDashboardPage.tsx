@@ -42,6 +42,14 @@ const initials = (name: string) =>
     .slice(0, 2)
     .toUpperCase()
 
+const monthLabel = (value: string) => {
+  const [year, month] = value.split('-').map(Number)
+  if (!year || !month) return 'Selected month'
+  return new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(
+    new Date(year, month - 1, 1),
+  )
+}
+
 export default function AdminDashboardPage() {
   const navigate = useNavigate()
   const [targetMonth, setTargetMonth] = useState(() => new Date().toISOString().slice(0, 7))
@@ -62,7 +70,8 @@ export default function AdminDashboardPage() {
     )
 
   const { summary: s } = dashboard.data
-  const rate = s.expectedMonth > 0 ? Math.min(100, (s.collectedMonth / s.expectedMonth) * 100) : 0
+  const rawRate = s.expectedMonth > 0 ? (s.collectedMonth / s.expectedMonth) * 100 : 0
+  const rate = Math.min(100, Math.max(0, rawRate))
   const contributionPerformance = dashboard.data.contributionByFrequency.map((item) => ({
     period: item.frequency
       .toLowerCase()
@@ -249,10 +258,17 @@ export default function AdminDashboardPage() {
         <Card className="overflow-hidden shadow-card">
           <CardHeader className="p-5 pb-0">
             <CardTitle>Monthly goal</CardTitle>
-            <p className="mt-1 text-xs text-muted-foreground">Collection target progress</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {monthLabel(targetMonth)} contribution target
+            </p>
           </CardHeader>
           <CardContent className="p-5">
             <div
+              role="progressbar"
+              aria-label={`${monthLabel(targetMonth)} collection progress`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(rate)}
               className="relative mx-auto mt-2 grid h-44 w-44 place-items-center rounded-full"
               style={{
                 background: `conic-gradient(var(--color-primary) ${rate * 3.6}deg, var(--color-muted) 0deg)`,
@@ -260,7 +276,7 @@ export default function AdminDashboardPage() {
             >
               <div className="grid h-32 w-32 place-items-center rounded-full bg-card text-center">
                 <div>
-                  <p className="text-3xl font-bold">{rate.toFixed(0)}%</p>
+                  <p className="text-3xl font-bold">{rawRate.toFixed(0)}%</p>
                   <p className="text-xs text-muted-foreground">complete</p>
                 </div>
               </div>

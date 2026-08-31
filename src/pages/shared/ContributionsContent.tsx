@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import ContributionPaymentCard from '@/components/member/ContributionPaymentCard'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -78,6 +79,7 @@ function OutstandingSummary() {
   )
 }
 export default function ContributionsContent({ admin = false }: { admin?: boolean }) {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<'ALL' | ContributionStatus>('ALL')
   const [page, setPage] = useState(1)
@@ -184,6 +186,29 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
     setAmountMax('')
     setPage(1)
   }
+  const openPayment = useCallback((item: Contribution) => {
+    setFormError('')
+    setPayment({
+      amount: item.totalDue,
+      paymentMethod: 'MOBILE_MONEY',
+      transactionReference: '',
+      proof: undefined,
+    })
+    setPaymentTarget(item)
+  }, [])
+  useEffect(() => {
+    if (admin || !items.length) return
+    const paymentID = searchParams.get('pay')
+    if (!paymentID) return
+    const target = items.find(
+      (item) => item.id === paymentID && ['DUE', 'OVERDUE', 'REJECTED'].includes(item.status),
+    )
+    const pendingNavigation = window.setTimeout(() => {
+      if (target) openPayment(target)
+      setSearchParams({}, { replace: true })
+    }, 0)
+    return () => window.clearTimeout(pendingNavigation)
+  }, [admin, items, openPayment, searchParams, setSearchParams])
   useEffect(() => {
     if (!selected?.id) return
     let active = true
@@ -287,7 +312,9 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
         )}
       </div>
       {formError && (
-        <p className="mb-3 rounded-xl bg-[#94B4C1]/25 p-3 text-sm text-[#213448] dark:text-[#EAE0CF]">{formError}</p>
+        <p className="mb-3 rounded-xl bg-[#94B4C1]/25 p-3 text-sm text-[#213448] dark:text-[#EAE0CF]">
+          {formError}
+        </p>
       )}
       {!admin && items.some((item) => item.status === 'PENDING') && (
         <Card className="mb-3">
@@ -629,15 +656,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
                             ? [
                                 {
                                   label: 'Submit Payment Proof',
-                                  onSelect: () => {
-                                    setPayment({
-                                      amount: item.totalDue,
-                                      paymentMethod: 'MOBILE_MONEY',
-                                      transactionReference: '',
-                                      proof: undefined,
-                                    })
-                                    setPaymentTarget(item)
-                                  },
+                                  onSelect: () => openPayment(item),
                                   separator: true,
                                 },
                               ]
