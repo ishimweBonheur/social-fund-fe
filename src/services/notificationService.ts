@@ -55,6 +55,19 @@ export function subscribeNotifications(onNotifications: (items: Notification[]) 
         const payload = JSON.parse(String(event.data)) as {
           type?: string
           data?: NotificationDto[]
+          message?: string
+        }
+        if (payload.type === 'account_suspended') {
+          stopped = true
+          authStorage.clear()
+          sessionStorage.setItem(
+            'social-fund:suspended-message',
+            payload.message ||
+              'Your account has been suspended. Contact support for help getting back online.',
+          )
+          window.dispatchEvent(new Event('social-fund:unauthorized'))
+          socket?.close()
+          return
         }
         if (payload.type === 'notifications' && Array.isArray(payload.data)) {
           onNotifications(payload.data.map((item) => mapNotification(item, role)))

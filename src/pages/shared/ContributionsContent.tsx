@@ -305,7 +305,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
             }}
           >
             <option value="ALL">All statuses</option>
-            {['UPCOMING', 'DUE', 'OVERDUE', 'PENDING', 'APPROVED', 'REJECTED'].map((value) => (
+            {['UPCOMING', 'DUE', 'OVERDUE', 'PENDING', 'APPROVED', 'REJECTED', 'FROZEN'].map((value) => (
               <option key={value}>{value}</option>
             ))}
           </select>
@@ -415,7 +415,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ALL">All statuses</SelectItem>
-                        {['UPCOMING', 'DUE', 'OVERDUE', 'PENDING', 'APPROVED', 'REJECTED'].map(
+                        {['UPCOMING', 'DUE', 'OVERDUE', 'PENDING', 'APPROVED', 'REJECTED', 'FROZEN'].map(
                           (value) => (
                             <SelectItem
                               key={value}

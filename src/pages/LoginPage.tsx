@@ -12,7 +12,11 @@ export default function LoginPage() {
   const { currentUser, loginWithGoogle } = useApp()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(() => {
+    const message = sessionStorage.getItem('social-fund:suspended-message') || ''
+    sessionStorage.removeItem('social-fund:suspended-message')
+    return message
+  })
 
   if (currentUser)
     return (

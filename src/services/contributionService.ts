@@ -7,6 +7,7 @@ export type ContributionStatus =
   | 'PENDING'
   | 'APPROVED'
   | 'REJECTED'
+  | 'FROZEN'
 interface ContributionDto {
   ID: string
   UserID: string
