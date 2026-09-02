@@ -15,12 +15,14 @@ export default function FilterDialog({
   children,
   activeCount = 0,
   onReset,
+  onApply,
   title = 'Filter records',
   description = 'Narrow the table using the options below.',
 }: {
   children: ReactNode
   activeCount?: number
   onReset: () => void
+  onApply?: () => void
   title?: string
   description?: string
 }) {
@@ -71,7 +73,12 @@ export default function FilterDialog({
               </Button>
             )}
             <DialogClose asChild>
-              <Button>Apply filters</Button>
+              <Button
+                type="button"
+                onClick={onApply}
+              >
+                Apply filters
+              </Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>

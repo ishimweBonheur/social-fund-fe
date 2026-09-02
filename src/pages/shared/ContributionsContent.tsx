@@ -94,23 +94,38 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
   const [paidTo, setPaidTo] = useState('')
   const [amountMin, setAmountMin] = useState('')
   const [amountMax, setAmountMax] = useState('')
+  const [appliedFilters, setAppliedFilters] = useState({
+    status: 'ALL' as 'ALL' | ContributionStatus,
+    dueFrom: '',
+    dueTo: '',
+    method: 'ALL',
+    proof: 'ALL',
+    paymentState: 'ALL',
+    lateFee: 'ALL',
+    reference: 'ALL',
+    paidFrom: '',
+    paidTo: '',
+    amountMin: '',
+    amountMax: '',
+  })
   const loader = useCallback(
     async () =>
       admin
         ? listAdminContributions({
             search,
-            status: status === 'ALL' ? undefined : status,
-            dueFrom: dueFrom || undefined,
-            dueTo: dueTo || undefined,
-            method: method === 'ALL' ? undefined : method,
-            proof: proof === 'ALL' ? undefined : proof,
-            paymentState: paymentState === 'ALL' ? undefined : paymentState,
-            lateFee: lateFee === 'ALL' ? undefined : lateFee,
-            reference: reference === 'ALL' ? undefined : reference,
-            paidFrom: paidFrom || undefined,
-            paidTo: paidTo || undefined,
-            amountMin: amountMin || undefined,
-            amountMax: amountMax || undefined,
+            status: appliedFilters.status === 'ALL' ? undefined : appliedFilters.status,
+            dueFrom: appliedFilters.dueFrom || undefined,
+            dueTo: appliedFilters.dueTo || undefined,
+            method: appliedFilters.method === 'ALL' ? undefined : appliedFilters.method,
+            proof: appliedFilters.proof === 'ALL' ? undefined : appliedFilters.proof,
+            paymentState:
+              appliedFilters.paymentState === 'ALL' ? undefined : appliedFilters.paymentState,
+            lateFee: appliedFilters.lateFee === 'ALL' ? undefined : appliedFilters.lateFee,
+            reference: appliedFilters.reference === 'ALL' ? undefined : appliedFilters.reference,
+            paidFrom: appliedFilters.paidFrom || undefined,
+            paidTo: appliedFilters.paidTo || undefined,
+            amountMin: appliedFilters.amountMin || undefined,
+            amountMax: appliedFilters.amountMax || undefined,
             page,
             pageSize: 10,
           })
@@ -121,23 +136,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
               page: 1,
               pageSize: 100,
             })))(),
-    [
-      admin,
-      search,
-      status,
-      dueFrom,
-      dueTo,
-      method,
-      proof,
-      paymentState,
-      lateFee,
-      reference,
-      paidFrom,
-      paidTo,
-      amountMin,
-      amountMax,
-      page,
-    ],
+    [admin, search, appliedFilters, page],
   )
   const remote = useRemoteData(loader)
   const [selected, setSelected] = useState<Contribution>()
@@ -155,7 +154,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState('')
   const items = useMemo(() => remote.data?.items ?? [], [remote.data])
-  const methods = ['MOBILE_MONEY', 'BANK_TRANSFER', 'CASH']
+  const methods = ['MOBILE_MONEY', 'BANK_TRANSFER', 'CASH', 'OTHER']
   const displayedItems = items
   const filterCount = [
     status !== 'ALL',
@@ -184,6 +183,37 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
     setPaidTo('')
     setAmountMin('')
     setAmountMax('')
+    setAppliedFilters({
+      status: 'ALL',
+      dueFrom: '',
+      dueTo: '',
+      method: 'ALL',
+      proof: 'ALL',
+      paymentState: 'ALL',
+      lateFee: 'ALL',
+      reference: 'ALL',
+      paidFrom: '',
+      paidTo: '',
+      amountMin: '',
+      amountMax: '',
+    })
+    setPage(1)
+  }
+  const applyFilters = () => {
+    setAppliedFilters({
+      status,
+      dueFrom,
+      dueTo,
+      method,
+      proof,
+      paymentState,
+      lateFee,
+      reference,
+      paidFrom,
+      paidTo,
+      amountMin,
+      amountMax,
+    })
     setPage(1)
   }
   const openPayment = useCallback((item: Contribution) => {
@@ -305,9 +335,11 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
             }}
           >
             <option value="ALL">All statuses</option>
-            {['UPCOMING', 'DUE', 'OVERDUE', 'PENDING', 'APPROVED', 'REJECTED', 'FROZEN'].map((value) => (
-              <option key={value}>{value}</option>
-            ))}
+            {['UPCOMING', 'DUE', 'OVERDUE', 'PENDING', 'APPROVED', 'REJECTED', 'FROZEN'].map(
+              (value) => (
+                <option key={value}>{value}</option>
+              ),
+            )}
           </select>
         )}
       </div>
@@ -385,224 +417,233 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
               </p>
               <p className="text-xs text-muted-foreground">{remote.data?.total ?? 0} records</p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                className="h-10 flex-1"
-                value={search}
-                onChange={(event) => {
-                  setSearch(event.target.value)
-                  setPage(1)
-                }}
-                placeholder="Search member or reference..."
-              />
-              {
-                <FilterDialog
-                  activeCount={filterCount}
-                  onReset={resetFilters}
-                  title="Filter contributions"
-                >
-                  <div>
-                    <p className="mb-2 text-xs font-semibold">Payment status</p>
-                    <Select
-                      value={status}
-                      onValueChange={(value) => {
-                        setStatus(value as typeof status)
-                        setPage(1)
-                      }}
-                    >
-                      <SelectTrigger className="min-w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">All statuses</SelectItem>
-                        {['UPCOMING', 'DUE', 'OVERDUE', 'PENDING', 'APPROVED', 'REJECTED', 'FROZEN'].map(
-                          (value) => (
+            {admin && (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  className="h-10 flex-1"
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value)
+                    setPage(1)
+                  }}
+                  placeholder="Search member or reference..."
+                />
+                {admin && (
+                  <FilterDialog
+                    activeCount={filterCount}
+                    onReset={resetFilters}
+                    onApply={applyFilters}
+                    title="Filter contributions"
+                  >
+                    <div>
+                      <p className="mb-2 text-xs font-semibold">Payment status</p>
+                      <Select
+                        value={status}
+                        onValueChange={(value) => {
+                          setStatus(value as typeof status)
+                          setPage(1)
+                        }}
+                      >
+                        <SelectTrigger className="min-w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">All statuses</SelectItem>
+                          {[
+                            'UPCOMING',
+                            'DUE',
+                            'OVERDUE',
+                            'PENDING',
+                            'APPROVED',
+                            'REJECTED',
+                            'FROZEN',
+                          ].map((value) => (
                             <SelectItem
                               key={value}
                               value={value}
                             >
                               {value}
                             </SelectItem>
-                          ),
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <p className="mb-2 text-xs font-semibold">Due from</p>
-                    <Input
-                      type="date"
-                      value={dueFrom}
-                      onChange={(event) => {
-                        setDueFrom(event.target.value)
-                        setPage(1)
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <p className="mb-2 text-xs font-semibold">Due to</p>
-                    <Input
-                      type="date"
-                      value={dueTo}
-                      onChange={(event) => {
-                        setDueTo(event.target.value)
-                        setPage(1)
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <p className="mb-2 text-xs font-semibold">Payment method</p>
-                    <Select
-                      value={method}
-                      onValueChange={(value) => {
-                        setMethod(value)
-                        setPage(1)
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">All methods</SelectItem>
-                        {methods.map((value) => (
-                          <SelectItem
-                            key={value}
-                            value={value}
-                          >
-                            {value.replaceAll('_', ' ')}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <p className="mb-2 text-xs font-semibold">Payment proof</p>
-                    <Select
-                      value={proof}
-                      onValueChange={(value) => {
-                        setProof(value as typeof proof)
-                        setPage(1)
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">With or without proof</SelectItem>
-                        <SelectItem value="WITH">Proof uploaded</SelectItem>
-                        <SelectItem value="WITHOUT">No proof uploaded</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <p className="mb-2 text-xs font-semibold">Payment completion</p>
-                    <Select
-                      value={paymentState}
-                      onValueChange={(value) => {
-                        setPaymentState(value as typeof paymentState)
-                        setPage(1)
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">Any payment completion</SelectItem>
-                        <SelectItem value="PAID">Fully paid</SelectItem>
-                        <SelectItem value="PARTIAL">Partially paid</SelectItem>
-                        <SelectItem value="UNPAID">Unpaid</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <p className="mb-2 text-xs font-semibold">Late fee</p>
-                    <Select
-                      value={lateFee}
-                      onValueChange={(value) => {
-                        setLateFee(value as typeof lateFee)
-                        setPage(1)
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">With or without late fee</SelectItem>
-                        <SelectItem value="WITH">Late fee applied</SelectItem>
-                        <SelectItem value="WITHOUT">No late fee</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <p className="mb-2 text-xs font-semibold">Transaction reference</p>
-                    <Select
-                      value={reference}
-                      onValueChange={(value) => {
-                        setReference(value as typeof reference)
-                        setPage(1)
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ALL">With or without reference</SelectItem>
-                        <SelectItem value="WITH">Reference available</SelectItem>
-                        <SelectItem value="WITHOUT">No reference</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <p className="mb-2 text-xs font-semibold">Paid from</p>
-                    <Input
-                      type="date"
-                      value={paidFrom}
-                      onChange={(event) => {
-                        setPaidFrom(event.target.value)
-                        setPage(1)
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <p className="mb-2 text-xs font-semibold">Paid to</p>
-                    <Input
-                      type="date"
-                      value={paidTo}
-                      onChange={(event) => {
-                        setPaidTo(event.target.value)
-                        setPage(1)
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <p className="mb-2 text-xs font-semibold">Minimum total due</p>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="RWF 0"
-                      value={amountMin}
-                      onChange={(event) => {
-                        setAmountMin(event.target.value)
-                        setPage(1)
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <p className="mb-2 text-xs font-semibold">Maximum total due</p>
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="No maximum"
-                      value={amountMax}
-                      onChange={(event) => {
-                        setAmountMax(event.target.value)
-                        setPage(1)
-                      }}
-                    />
-                  </div>
-                </FilterDialog>
-              }
-            </div>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold">Due from</p>
+                      <Input
+                        type="date"
+                        value={dueFrom}
+                        onChange={(event) => {
+                          setDueFrom(event.target.value)
+                          setPage(1)
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold">Due to</p>
+                      <Input
+                        type="date"
+                        value={dueTo}
+                        onChange={(event) => {
+                          setDueTo(event.target.value)
+                          setPage(1)
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold">Payment method</p>
+                      <Select
+                        value={method}
+                        onValueChange={(value) => {
+                          setMethod(value)
+                          setPage(1)
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">All methods</SelectItem>
+                          {methods.map((value) => (
+                            <SelectItem
+                              key={value}
+                              value={value}
+                            >
+                              {value.replaceAll('_', ' ')}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold">Payment proof</p>
+                      <Select
+                        value={proof}
+                        onValueChange={(value) => {
+                          setProof(value as typeof proof)
+                          setPage(1)
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">With or without proof</SelectItem>
+                          <SelectItem value="WITH">Proof uploaded</SelectItem>
+                          <SelectItem value="WITHOUT">No proof uploaded</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold">Payment completion</p>
+                      <Select
+                        value={paymentState}
+                        onValueChange={(value) => {
+                          setPaymentState(value as typeof paymentState)
+                          setPage(1)
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">Any payment completion</SelectItem>
+                          <SelectItem value="PAID">Fully paid</SelectItem>
+                          <SelectItem value="PARTIAL">Partially paid</SelectItem>
+                          <SelectItem value="UNPAID">Unpaid</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold">Late fee</p>
+                      <Select
+                        value={lateFee}
+                        onValueChange={(value) => {
+                          setLateFee(value as typeof lateFee)
+                          setPage(1)
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">With or without late fee</SelectItem>
+                          <SelectItem value="WITH">Late fee applied</SelectItem>
+                          <SelectItem value="WITHOUT">No late fee</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold">Transaction reference</p>
+                      <Select
+                        value={reference}
+                        onValueChange={(value) => {
+                          setReference(value as typeof reference)
+                          setPage(1)
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ALL">With or without reference</SelectItem>
+                          <SelectItem value="WITH">Reference available</SelectItem>
+                          <SelectItem value="WITHOUT">No reference</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold">Paid from</p>
+                      <Input
+                        type="date"
+                        value={paidFrom}
+                        onChange={(event) => {
+                          setPaidFrom(event.target.value)
+                          setPage(1)
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold">Paid to</p>
+                      <Input
+                        type="date"
+                        value={paidTo}
+                        onChange={(event) => {
+                          setPaidTo(event.target.value)
+                          setPage(1)
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold">Minimum total due</p>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="RWF 0"
+                        value={amountMin}
+                        onChange={(event) => {
+                          setAmountMin(event.target.value)
+                          setPage(1)
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold">Maximum total due</p>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="No maximum"
+                        value={amountMax}
+                        onChange={(event) => {
+                          setAmountMax(event.target.value)
+                          setPage(1)
+                        }}
+                      />
+                    </div>
+                  </FilterDialog>
+                )}
+              </div>
+            )}
           </div>
           <CardContent className="p-0">
             <Table>
