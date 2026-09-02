@@ -52,6 +52,9 @@ export default function OverdueContributionBanner() {
   }, [currentUser?.role])
 
   useEffect(() => {
+    if (location.pathname === '/member/contributions') {
+      return
+    }
     const initial = window.setTimeout(() => void refresh(), 0)
     const interval = window.setInterval(() => void refresh(), 60_000)
     return () => {
@@ -60,7 +63,13 @@ export default function OverdueContributionBanner() {
     }
   }, [refresh, location.pathname])
 
-  if (currentUser?.role !== 'MEMBER' || !summary || summary.count < 1) return null
+  if (
+    currentUser?.role !== 'MEMBER' ||
+    location.pathname === '/member/contributions' ||
+    !summary ||
+    summary.count < 1
+  )
+    return null
 
   const openPayment = () => {
     const query = summary.paymentTarget ? `?pay=${summary.paymentTarget.id}` : ''
@@ -89,7 +98,8 @@ export default function OverdueContributionBanner() {
           </span>
           <span className="mt-0.5 block text-xs font-medium text-amber-900/80 dark:text-amber-100/85 sm:text-sm">
             {summary.count} overdue {summary.count === 1 ? 'payment' : 'payments'}, including late
-            penalties. please make a payment to avoid further penalties and potential suspension of your membership.
+            penalties. please make a payment to avoid further penalties and potential suspension of
+            your membership.
           </span>
         </span>
         {loading ? (

@@ -1,6 +1,6 @@
 import { Bell, ChevronDown, LoaderCircle, LogOut, Search, Settings, UserRound, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -122,6 +122,17 @@ export function Header() {
 
   return (
     <header className="relative flex h-14 w-full min-w-0 items-center justify-between gap-3 px-1 sm:px-3">
+      <NavLink
+        to={`/${currentUser.role.toLowerCase()}/dashboard`}
+        className="flex h-10 min-w-0 shrink items-center overflow-hidden md:hidden"
+        title="Social Fund"
+      >
+        <img
+          src="/logo i.png"
+          alt="Social Fund"
+          className="h-10 w-auto max-w-[8.5rem] object-contain object-left"
+        />
+      </NavLink>
       <form
         onSubmit={handleSearch}
         className="relative hidden w-full max-w-xl md:block"

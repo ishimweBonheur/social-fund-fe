@@ -1,4 +1,4 @@
-import { ChevronRight, Home } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { navigation } from '@/config/navigation'
 import { useApp } from '@/context/AppContext'
@@ -19,7 +19,7 @@ export function Breadcrumbs() {
   return (
     <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground">
       <Link to={dashboard.to} className="flex items-center gap-1.5 transition-colors hover:text-foreground">
-        <Home className="h-3.5 w-3.5" />
+        
         {dashboard.label}
       </Link>
       {!onDashboard && current && (

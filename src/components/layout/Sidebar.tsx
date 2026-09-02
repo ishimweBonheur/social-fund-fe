@@ -1,9 +1,7 @@
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
-import { FinmLogoIcon } from '@/components/shared/FinmLogo'
 import { navigation, dashboardFor } from '@/config/navigation'
 import { useApp } from '@/context/AppContext'
-import { BRAND_GREEN } from '@/lib/brand'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
@@ -28,22 +26,25 @@ export function Sidebar({ expanded, onExpandedChange }: SidebarProps) {
       <NavLink
         to={dashboardFor(currentUser.role)}
         className={cn(
-          'mb-5 flex h-10 shrink-0 items-center text-sm font-semibold tracking-tight text-[#EAE0CF]',
-          expanded ? 'w-full gap-3 px-2' : 'w-10 justify-center',
+          'mb-5 flex h-12 shrink-0 items-center overflow-hidden',
+          expanded ? 'w-full px-2' : 'w-10 justify-center',
         )}
         title="Social Fund"
       >
-        <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-          style={{ backgroundColor: BRAND_GREEN }}
-        >
-          <FinmLogoIcon className="h-4 w-4" />
-        </span>
-        {expanded && (
-          <div>
-            <span className="block truncate text-base">Social Fund</span>
-            <span className="block text-[10px] font-medium text-[#94B4C1]">Community finance</span>
-          </div>
+        {expanded ? (
+          <img
+            src="/logo i.png"
+            alt="Social Fund"
+            className="h-12 w-auto max-w-full object-contain object-left"
+          />
+        ) : (
+          <span className="relative block h-10 w-10 overflow-hidden" aria-hidden="true">
+            <img
+              src="/logo i.png"
+              alt=""
+              className="absolute left-[-0.5rem] top-[-0.25rem] h-12 w-auto max-w-none"
+            />
+          </span>
         )}
       </NavLink>
       <nav
