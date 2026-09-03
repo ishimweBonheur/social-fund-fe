@@ -17,21 +17,45 @@ interface NotificationDto {
   status?: string
   ReadAt?: string
   read_at?: string
+  Attempts?: number
+  attempts?: number
+  SentAt?: string
+  sent_at?: string
+  LastError?: string
+  last_error?: string
+  NextRetryAt?: string
+  next_retry_at?: string
+  Recipient?: string
+  recipient?: string
 }
 const mapNotification = (item: NotificationDto, role: UserRole): Notification => ({
   id: item.ID ?? item.id ?? '',
   title: item.Subject ?? item.subject ?? item.Type ?? item.type ?? 'Notification',
   message: item.Message ?? item.message ?? '',
-  time: item.CreatedAt ?? item.created_at ? new Date(item.CreatedAt ?? item.created_at!).toLocaleString() : '',
+  time:
+    (item.CreatedAt ?? item.created_at)
+      ? new Date(item.CreatedAt ?? item.created_at!).toLocaleString()
+      : '',
   read: Boolean(item.ReadAt ?? item.read_at),
   audience: role,
   deliveryStatus: item.Status ?? item.status,
+  attempts: item.Attempts ?? item.attempts ?? 0,
+  sentAt: item.SentAt ?? item.sent_at,
+  lastError: item.LastError ?? item.last_error,
+  nextRetryAt: item.NextRetryAt ?? item.next_retry_at,
+  recipient: item.Recipient ?? item.recipient ?? '',
 })
 export async function listNotifications(): Promise<Notification[]> {
   const role = authStorage.getUser()?.role ?? 'MEMBER'
   const endpoint = role === 'ADMIN' ? '/admin/notifications/' : '/notifications/'
   const { data } = await apiClient.get<ApiEnvelope<NotificationDto[]>>(endpoint)
   return data.data.map((item) => mapNotification(item, role as UserRole))
+}
+export async function listNotificationDeliveries(): Promise<Notification[]> {
+  const { data } = await apiClient.get<ApiEnvelope<NotificationDto[]>>('/admin/notifications/', {
+    params: { scope: 'all', limit: 100 },
+  })
+  return data.data.map((item) => mapNotification(item, 'ADMIN'))
 }
 export function subscribeNotifications(onNotifications: (items: Notification[]) => void) {
   const token = authStorage.getToken()

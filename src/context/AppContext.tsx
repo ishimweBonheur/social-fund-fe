@@ -26,7 +26,7 @@ interface AppContextValue {
   loginWithGoogle: (idToken: string) => Promise<User>
   logout: () => void
   markNotificationRead: (id: string) => void
-  markAllNotificationsRead: () => void
+  markAllNotificationsRead: () => Promise<void>
   refreshNotifications: () => void
 }
 
@@ -90,7 +90,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     )
     void readNotification(id).catch(() => undefined)
   }, [])
-  const markAllNotificationsRead = useCallback(() => {
+  const markAllNotificationsRead = useCallback(async () => {
+    const previous = allNotifications
     setNotifications((items) =>
       items.map((item) =>
         item.audience === 'ALL' || item.audience === currentUser?.role
@@ -98,8 +99,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
           : item,
       ),
     )
-    void readAllNotifications().catch(() => undefined)
-  }, [currentUser?.role])
+    try {
+      await readAllNotifications()
+      const items = await listNotifications()
+      setNotifications(items)
+    } catch (error) {
+      setNotifications(previous)
+      throw error
+    }
+  }, [allNotifications, currentUser?.role])
 
   const refreshNotifications = useCallback(() => {
     if (!currentUser) return

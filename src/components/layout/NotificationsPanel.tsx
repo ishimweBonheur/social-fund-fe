@@ -41,7 +41,7 @@ export function NotificationsPanel() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={markAllNotificationsRead}
+            onClick={() => void markAllNotificationsRead()}
           >
             <CheckCheck className="h-4 w-4" /> Mark all read
           </Button>

@@ -1,9 +1,13 @@
+import { useState } from 'react'
+import { toast } from 'sonner'
+import DetailDialog from '@/components/shared/DetailDialog'
+import EmptyState from '@/components/shared/EmptyState'
 import { PageHeader } from '@/components/shared/PageHeader'
+import SupportRequestDialog from '@/components/shared/SupportRequestDialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useApp } from '@/context/AppContext'
-import { retryNotification } from '@/services/notificationService'
-import SupportRequestDialog from '@/components/shared/SupportRequestDialog'
+import type { Notification } from '@/types/app'
 
 export default function NotificationsContent() {
   const {
@@ -13,12 +17,18 @@ export default function NotificationsContent() {
     markAllNotificationsRead,
     refreshNotifications,
   } = useApp()
-  const [selected, setSelected] = useState<(typeof notifications)[number]>()
+  const [selected, setSelected] = useState<Notification>()
   const [supportOpen, setSupportOpen] = useState(false)
-  const markAll = () => {
-    markAllNotificationsRead()
-    toast.success('All notifications marked as read.')
+
+  const markAll = async () => {
+    try {
+      await markAllNotificationsRead()
+      toast.success('All notifications marked as read.')
+    } catch {
+      toast.error('Unable to mark notifications as read.')
+    }
   }
+
   return (
     <div>
       <PageHeader
@@ -32,11 +42,11 @@ export default function NotificationsContent() {
             >
               Request Support
             </Button>
-          ) : notifications.length ? (
+          ) : notifications.some((item) => !item.read) ? (
             <Button
               variant="outline"
               className="rounded-full"
-              onClick={markAll}
+              onClick={() => void markAll()}
             >
               Mark all read
             </Button>
@@ -48,7 +58,7 @@ export default function NotificationsContent() {
           {notifications.length === 0 ? (
             <EmptyState
               title="No notifications"
-              description="You are all caught up. New fund activity will appear here."
+              description="You are all caught up. New activity will appear here."
             />
           ) : (
             notifications.map((notification) => (
@@ -59,42 +69,25 @@ export default function NotificationsContent() {
                   setSelected(notification)
                   markNotificationRead(notification.id)
                 }}
-                className={`relative block w-full border-l-4 p-4 text-left transition-colors hover:bg-muted ${
-                  notification.read
-                    ? 'border-l-transparent bg-background'
-                    : 'border-l-primary bg-primary/10'
-                }`}
+                className={`block w-full border-l-4 p-4 text-left transition-colors hover:bg-muted ${notification.read ? 'border-l-transparent bg-background' : 'border-l-primary bg-primary/10'}`}
               >
                 <div className="flex justify-between gap-4">
-                  <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex items-center gap-2">
                     {!notification.read && (
                       <span
                         className="size-2 shrink-0 rounded-full bg-primary"
                         aria-label="Unread"
                       />
                     )}
-                    <p className={`text-sm ${notification.read ? 'font-semibold' : 'font-bold'}`}>
+                    <p
+                      className={notification.read ? 'text-sm font-semibold' : 'text-sm font-bold'}
+                    >
                       {notification.title}
                     </p>
                   </div>
                   <span className="text-xs text-muted-foreground">{notification.time}</span>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">{notification.message}</p>
-                {notification.deliveryStatus === 'FAILED' && (
-                  <Button
-                    className="mt-2"
-                    size="sm"
-                    variant="outline"
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      void retryNotification(notification.id)
-                        .then(() => toast.success('Notification queued for retry.'))
-                        .catch(() => toast.error('Unable to retry notification.'))
-                    }}
-                  >
-                    Retry Delivery
-                  </Button>
-                )}
               </button>
             ))
           )}
@@ -102,9 +95,7 @@ export default function NotificationsContent() {
       </Card>
       <DetailDialog
         open={Boolean(selected)}
-        onOpenChange={(open) => {
-          if (!open) setSelected(undefined)
-        }}
+        onOpenChange={(open) => !open && setSelected(undefined)}
         title={selected?.title ?? 'Notification'}
         description="Notification details"
         items={
@@ -112,7 +103,7 @@ export default function NotificationsContent() {
             ? [
                 { label: 'Message', value: selected.message },
                 { label: 'Time', value: selected.time },
-                { label: 'Status', value: selected.deliveryStatus ?? 'READ', status: true },
+                { label: 'Status', value: selected.read ? 'READ' : 'UNREAD', status: true },
               ]
             : []
         }
@@ -127,7 +118,3 @@ export default function NotificationsContent() {
     </div>
   )
 }
-import { useState } from 'react'
-import { toast } from 'sonner'
-import DetailDialog from '@/components/shared/DetailDialog'
-import EmptyState from '@/components/shared/EmptyState'

@@ -68,5 +68,10 @@ export interface Notification {
   read: boolean
   audience: UserRole | 'ALL'
   deliveryStatus?: string
+  attempts: number
+  sentAt?: string
+  lastError?: string
+  nextRetryAt?: string
+  recipient: string
 }
 export type FundStatus = 'Active' | 'Paid' | 'Pending' | 'Overdue' | 'Approved' | 'Rejected'

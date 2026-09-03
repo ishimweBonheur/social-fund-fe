@@ -1,4 +1,4 @@
-    import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import ContributionPaymentCard from '@/components/member/ContributionPaymentCard'
@@ -42,6 +42,12 @@ import {
 import { useRemoteData } from '@/hooks/useRemoteData'
 import { formatPersonName } from '@/lib/utils'
 import { getApiErrorMessage } from '@/services/api'
+import {
+  getActiveContributionPlan,
+  updateContributionPlan,
+  type ContributionPlan,
+} from '@/services/contributionPlanService'
+import type { ReminderFrequency } from '@/types/app'
 import {
   approveContribution,
   getContribution,
@@ -144,6 +150,11 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
   const [rejectTarget, setRejectTarget] = useState<Contribution>()
   const [paymentTarget, setPaymentTarget] = useState<Contribution>()
   const [supportTarget, setSupportTarget] = useState<Contribution>()
+  const [reminderPlan, setReminderPlan] = useState<ContributionPlan>()
+  const [reminderEnabled, setReminderEnabled] = useState(true)
+  const [reminderFrequency, setReminderFrequency] = useState<ReminderFrequency>('DAILY')
+  const [reminderInterval, setReminderInterval] = useState('1')
+  const [reminderBusy, setReminderBusy] = useState(false)
   const [reason, setReason] = useState('')
   const [payment, setPayment] = useState({
     amount: '',
@@ -301,6 +312,54 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
     } catch (error) {
       tab?.close()
       toast.error(getApiErrorMessage(error))
+    }
+  }
+  const openReminderSettings = async (item: Contribution) => {
+    setReminderBusy(true)
+    try {
+      const plan = await getActiveContributionPlan(item.userId, item.memberName ?? 'Member')
+      setReminderPlan(plan)
+      setReminderEnabled(plan.reminderEnabled)
+      setReminderFrequency(plan.reminderFrequency ?? 'DAILY')
+      setReminderInterval(String(plan.reminderInterval ?? 1))
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to load reminder settings.'))
+    } finally {
+      setReminderBusy(false)
+    }
+  }
+  const saveReminderSettings = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!reminderPlan) return
+    const interval = Number(reminderInterval)
+    if (
+      reminderEnabled &&
+      reminderFrequency === 'CUSTOM' &&
+      (!Number.isInteger(interval) || interval < 1)
+    ) {
+      toast.error('Custom reminder interval must be at least one day.')
+      return
+    }
+    setReminderBusy(true)
+    try {
+      await updateContributionPlan(reminderPlan, {
+        amount: reminderPlan.amount,
+        frequency: reminderPlan.frequency,
+        intervalValue: reminderPlan.intervalValue,
+        dueDay: reminderPlan.dueDay,
+        reminderEnabled,
+        reminderFrequency,
+        reminderInterval: reminderFrequency === 'CUSTOM' ? interval : undefined,
+        lateFeeEnabled: reminderPlan.lateFeeEnabled,
+        lateFeePercentage: reminderPlan.lateFeePercentage,
+        gracePeriodDays: reminderPlan.gracePeriodDays,
+      })
+      toast.success('Reminder schedule updated.')
+      setReminderPlan(undefined)
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to update reminder settings.'))
+    } finally {
+      setReminderBusy(false)
     }
   }
   return (
@@ -673,6 +732,14 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
                       <TableActions
                         actions={[
                           { label: 'View Details', onSelect: () => setSelected(item) },
+                          ...(admin
+                            ? [
+                                {
+                                  label: 'Manage Reminders',
+                                  onSelect: () => void openReminderSettings(item),
+                                },
+                              ]
+                            : []),
                           ...(item.proofUploadedAt || item.proofUrl
                             ? [{ label: 'View Proof', onSelect: () => void viewProof(item) }]
                             : []),
@@ -752,6 +819,77 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
             : []
         }
       />
+      <Dialog
+        open={Boolean(reminderPlan)}
+        onOpenChange={(open) => {
+          if (!open && !reminderBusy) setReminderPlan(undefined)
+        }}
+      >
+        <DialogContent>
+          <form onSubmit={(event) => void saveReminderSettings(event)}>
+            <DialogHeader>
+              <DialogTitle>Manage Payment Reminders</DialogTitle>
+              <DialogDescription>
+                Choose how often overdue reminders are sent for {reminderPlan?.memberName}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 px-6 py-5">
+              <label className="flex items-center gap-3 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={reminderEnabled}
+                  onChange={(event) => setReminderEnabled(event.target.checked)}
+                />
+                Send overdue reminders
+              </label>
+              {reminderEnabled && (
+                <div>
+                  <Label>Reminder frequency</Label>
+                  <Select
+                    value={reminderFrequency}
+                    onValueChange={(value) => setReminderFrequency(value as ReminderFrequency)}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DAILY">Daily</SelectItem>
+                      <SelectItem value="WEEKLY">Weekly</SelectItem>
+                      <SelectItem value="CUSTOM">Custom interval</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {reminderEnabled && reminderFrequency === 'CUSTOM' && (
+                <div>
+                  <Label htmlFor="reminder-interval">Repeat every (days)</Label>
+                  <Input
+                    id="reminder-interval"
+                    className="mt-1"
+                    type="number"
+                    min="1"
+                    step="1"
+                    required
+                    value={reminderInterval}
+                    onChange={(event) => setReminderInterval(event.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={reminderBusy}
+                onClick={() => setReminderPlan(undefined)}
+              >
+                Cancel
+              </Button>
+              <Button disabled={reminderBusy}>{reminderBusy ? 'Saving…' : 'Save reminders'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
       <ConfirmDialog
         open={Boolean(approveTarget)}
         onOpenChange={(open) => {

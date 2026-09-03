@@ -1,11 +1,11 @@
 import {
-  Activity,
   Bell,
   ClipboardCheck,
   FileClock,
   HandCoins,
   LayoutDashboard,
   ListChecks,
+  Mail,
   Settings,
   UserRound,
   Users,
@@ -22,8 +22,8 @@ export const navigation = {
     { to: '/admin/loans', icon: HandCoins, label: 'Assistance Requests' },
     { to: '/admin/repayments', icon: ClipboardCheck, label: 'Fund Ledger' },
     { to: '/admin/notifications', icon: Bell, label: 'Notifications' },
+    { to: '/admin/email-notifications', icon: Mail, label: 'Email Notifications' },
     { to: '/admin/audit-logs', icon: FileClock, label: 'Audit Logs' },
-    { to: '/admin/monitoring', icon: Activity, label: 'System Monitoring' },
     { to: '/admin/settings', icon: Settings, label: 'Settings' },
   ],
   MEMBER: [

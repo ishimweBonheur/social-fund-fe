@@ -9,9 +9,9 @@ import AuditLogsPage from '@/pages/admin/AuditLogsPage'
 import ContributionPlansPage from '@/pages/admin/ContributionPlansPage'
 import ContributionsPage from '@/pages/admin/ContributionsPage'
 import ContributionReviewPage from '@/pages/admin/ContributionReviewPage'
+import EmailNotificationsPage from '@/pages/admin/EmailNotificationsPage'
 import LoansPage from '@/pages/admin/LoansPage'
 import MembersPage from '@/pages/admin/MembersPage'
-import MonitoringPage from '@/pages/admin/MonitoringPage'
 import NotificationsPage from '@/pages/admin/NotificationsPage'
 import RepaymentsPage from '@/pages/admin/RepaymentsPage'
 import SettingsPage from '@/pages/admin/SettingsPage'
@@ -106,12 +106,12 @@ function AppRoutes() {
             element={<NotificationsPage />}
           />
           <Route
-            path="/admin/audit-logs"
-            element={<AuditLogsPage />}
+            path="/admin/email-notifications"
+            element={<EmailNotificationsPage />}
           />
           <Route
-            path="/admin/monitoring"
-            element={<MonitoringPage />}
+            path="/admin/audit-logs"
+            element={<AuditLogsPage />}
           />
           <Route
             path="/admin/settings"

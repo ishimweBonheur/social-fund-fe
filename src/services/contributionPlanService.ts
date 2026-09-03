@@ -106,6 +106,10 @@ export async function listContributionPlansPage(
 export async function listContributionPlans() {
   return (await listContributionPlansPage({ pageSize: 100 })).items
 }
+export async function getActiveContributionPlan(userId: string, memberName: string) {
+  const { data } = await apiClient.get<PlanDto>(`/contribution-plans/users/${userId}/active`)
+  return map(data, memberName)
+}
 export async function updateContributionPlan(plan: ContributionPlan, input: ContributionPlanInput) {
   const payload = {
     Amount: input.amount,
