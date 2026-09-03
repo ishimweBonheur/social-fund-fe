@@ -15,7 +15,7 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
       className="mb-4 flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
     >
       <div className="min-w-0">
-        <h1 className="text-2xl font-extrabold tracking-[-0.025em] text-foreground">{title}</h1>
+        <h1 className="text-2xl font-extrabold tracking text-foreground">{title}</h1>
         {description && (
           <p className="mt-0.5 text-sm font-normal text-muted-foreground">{description}</p>
         )}

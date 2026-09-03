@@ -59,10 +59,24 @@ export default function NotificationsContent() {
                   setSelected(notification)
                   markNotificationRead(notification.id)
                 }}
-                className="block w-full p-4 text-left hover:bg-muted"
+                className={`relative block w-full border-l-4 p-4 text-left transition-colors hover:bg-muted ${
+                  notification.read
+                    ? 'border-l-transparent bg-background'
+                    : 'border-l-primary bg-primary/10'
+                }`}
               >
                 <div className="flex justify-between gap-4">
-                  <p className="text-sm font-semibold">{notification.title}</p>
+                  <div className="flex min-w-0 items-center gap-2">
+                    {!notification.read && (
+                      <span
+                        className="size-2 shrink-0 rounded-full bg-primary"
+                        aria-label="Unread"
+                      />
+                    )}
+                    <p className={`text-sm ${notification.read ? 'font-semibold' : 'font-bold'}`}>
+                      {notification.title}
+                    </p>
+                  </div>
                   <span className="text-xs text-muted-foreground">{notification.time}</span>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">{notification.message}</p>

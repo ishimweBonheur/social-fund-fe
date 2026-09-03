@@ -55,9 +55,19 @@ export function NotificationsPanel() {
                 markNotificationRead(n.id)
                 if (currentUser) navigate(`/${currentUser.role.toLowerCase()}/notifications`)
               }}
-              className="block w-full border-b p-3 text-left hover:bg-muted"
+              className={`relative block w-full border-b border-l-4 p-3 text-left transition-colors hover:bg-muted ${
+                n.read ? 'border-l-transparent bg-background' : 'border-l-primary bg-primary/10'
+              }`}
             >
-              <p className="text-sm font-medium">{n.title}</p>
+              <div className="flex items-center gap-2">
+                {!n.read && (
+                  <span
+                    className="size-2 shrink-0 rounded-full bg-primary"
+                    aria-label="Unread"
+                  />
+                )}
+                <p className={`text-sm ${n.read ? 'font-medium' : 'font-bold'}`}>{n.title}</p>
+              </div>
               <p className="mt-1 text-xs text-muted-foreground">{n.message}</p>
               <p className="mt-1 text-[10px] text-muted-foreground">{n.time}</p>
             </button>
