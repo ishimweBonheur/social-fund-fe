@@ -154,6 +154,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
   const [reminderEnabled, setReminderEnabled] = useState(true)
   const [reminderFrequency, setReminderFrequency] = useState<ReminderFrequency>('DAILY')
   const [reminderInterval, setReminderInterval] = useState('1')
+  const [reminderDaysBeforeDue, setReminderDaysBeforeDue] = useState('3')
   const [reminderBusy, setReminderBusy] = useState(false)
   const [reason, setReason] = useState('')
   const [payment, setPayment] = useState({
@@ -242,7 +243,8 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
     const paymentID = searchParams.get('pay')
     if (!paymentID) return
     const target = items.find(
-      (item) => item.id === paymentID && ['DUE', 'OVERDUE', 'REJECTED'].includes(item.status),
+      (item) =>
+        item.id === paymentID && ['UPCOMING', 'DUE', 'OVERDUE', 'REJECTED'].includes(item.status),
     )
     const pendingNavigation = window.setTimeout(() => {
       if (target) openPayment(target)
@@ -319,9 +321,10 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
     try {
       const plan = await getActiveContributionPlan(item.userId, item.memberName ?? 'Member')
       setReminderPlan(plan)
-      setReminderEnabled(plan.reminderEnabled)
-      setReminderFrequency(plan.reminderFrequency ?? 'DAILY')
-      setReminderInterval(String(plan.reminderInterval ?? 1))
+      setReminderEnabled(plan.preDueReminderEnabled)
+      setReminderFrequency(plan.preDueReminderFrequency ?? 'DAILY')
+      setReminderInterval(String(plan.preDueReminderInterval ?? 1))
+      setReminderDaysBeforeDue(String(plan.preDueReminderDaysBeforeDue))
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to load reminder settings.'))
     } finally {
@@ -332,12 +335,20 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
     event.preventDefault()
     if (!reminderPlan) return
     const interval = Number(reminderInterval)
+    const daysBeforeDue = Number(reminderDaysBeforeDue)
     if (
       reminderEnabled &&
       reminderFrequency === 'CUSTOM' &&
       (!Number.isInteger(interval) || interval < 1)
     ) {
       toast.error('Custom reminder interval must be at least one day.')
+      return
+    }
+    if (
+      reminderEnabled &&
+      (!Number.isInteger(daysBeforeDue) || daysBeforeDue < 0 || daysBeforeDue > 365)
+    ) {
+      toast.error('Reminder lead time must be between 0 and 365 days.')
       return
     }
     setReminderBusy(true)
@@ -347,9 +358,13 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
         frequency: reminderPlan.frequency,
         intervalValue: reminderPlan.intervalValue,
         dueDay: reminderPlan.dueDay,
-        reminderEnabled,
-        reminderFrequency,
-        reminderInterval: reminderFrequency === 'CUSTOM' ? interval : undefined,
+        reminderEnabled: reminderPlan.reminderEnabled,
+        reminderFrequency: reminderPlan.reminderFrequency,
+        reminderInterval: reminderPlan.reminderInterval,
+        preDueReminderEnabled: reminderEnabled,
+        preDueReminderFrequency: reminderFrequency,
+        preDueReminderInterval: reminderFrequency === 'CUSTOM' ? interval : undefined,
+        preDueReminderDaysBeforeDue: daysBeforeDue,
         lateFeeEnabled: reminderPlan.lateFeeEnabled,
         lateFeePercentage: reminderPlan.lateFeePercentage,
         gracePeriodDays: reminderPlan.gracePeriodDays,
@@ -760,7 +775,8 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
                                 },
                               ]
                             : []),
-                          ...(!admin && ['DUE', 'OVERDUE', 'REJECTED'].includes(item.status)
+                          ...(!admin &&
+                          ['UPCOMING', 'DUE', 'OVERDUE', 'REJECTED'].includes(item.status)
                             ? [
                                 {
                                   label: 'Submit Payment Proof',
@@ -830,7 +846,7 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
             <DialogHeader>
               <DialogTitle>Manage Payment Reminders</DialogTitle>
               <DialogDescription>
-                Choose how often overdue reminders are sent for {reminderPlan?.memberName}.
+                Choose when and how often payment reminders are sent to {reminderPlan?.memberName}.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 px-6 py-5">
@@ -840,8 +856,24 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
                   checked={reminderEnabled}
                   onChange={(event) => setReminderEnabled(event.target.checked)}
                 />
-                Send overdue reminders
+                Send payment reminders
               </label>
+              {reminderEnabled && (
+                <div>
+                  <Label htmlFor="reminder-days-before-due">Start before due date (days)</Label>
+                  <Input
+                    id="reminder-days-before-due"
+                    className="mt-1"
+                    type="number"
+                    min="0"
+                    max="365"
+                    step="1"
+                    required
+                    value={reminderDaysBeforeDue}
+                    onChange={(event) => setReminderDaysBeforeDue(event.target.value)}
+                  />
+                </div>
+              )}
               {reminderEnabled && (
                 <div>
                   <Label>Reminder frequency</Label>

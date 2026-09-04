@@ -10,15 +10,14 @@ import ContributionPlansPage from '@/pages/admin/ContributionPlansPage'
 import ContributionsPage from '@/pages/admin/ContributionsPage'
 import ContributionReviewPage from '@/pages/admin/ContributionReviewPage'
 import EmailNotificationsPage from '@/pages/admin/EmailNotificationsPage'
-import LoansPage from '@/pages/admin/LoansPage'
 import MembersPage from '@/pages/admin/MembersPage'
+import NewMemberPage from '@/pages/admin/NewMemberPage'
 import NotificationsPage from '@/pages/admin/NotificationsPage'
 import RepaymentsPage from '@/pages/admin/RepaymentsPage'
 import SettingsPage from '@/pages/admin/SettingsPage'
 import LoginPage from '@/pages/LoginPage'
 import MemberContributionsPage from '@/pages/member/MemberContributionsPage'
 import MemberDashboardPage from '@/pages/member/MemberDashboardPage'
-import MemberLoansPage from '@/pages/member/MemberLoansPage'
 import MemberNotificationsPage from '@/pages/member/MemberNotificationsPage'
 import MemberPlanPage from '@/pages/member/MemberPlanPage'
 import MemberProfilePage from '@/pages/member/MemberProfilePage'
@@ -82,6 +81,10 @@ function AppRoutes() {
             element={<MembersPage />}
           />
           <Route
+            path="/admin/members/new"
+            element={<NewMemberPage />}
+          />
+          <Route
             path="/admin/contribution-plans"
             element={<ContributionPlansPage />}
           />
@@ -92,10 +95,6 @@ function AppRoutes() {
           <Route
             path="/admin/contributions/:id/review"
             element={<ContributionReviewPage />}
-          />
-          <Route
-            path="/admin/loans"
-            element={<LoansPage />}
           />
           <Route
             path="/admin/repayments"
@@ -132,10 +131,6 @@ function AppRoutes() {
           <Route
             path="/member/contribution-plan"
             element={<MemberPlanPage />}
-          />
-          <Route
-            path="/member/loans"
-            element={<MemberLoansPage />}
           />
           <Route
             path="/member/repayments"

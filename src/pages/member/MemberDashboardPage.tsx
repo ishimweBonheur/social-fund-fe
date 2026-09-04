@@ -15,7 +15,6 @@ import {
   CheckCircle2,
   CircleDollarSign,
   Clock3,
-  HandCoins,
   ReceiptText,
   WalletCards,
 } from 'lucide-react'
@@ -79,14 +78,6 @@ export default function MemberDashboardPage() {
       tone: 'bg-[#94B4C1]/25 text-[#547792]',
       to: '/member/contributions',
     },
-    {
-      label: 'Assistance received',
-      value: formatCurrency(s.assistanceReceived),
-      note: `${s.pendingCount} request${s.pendingCount === 1 ? '' : 's'} pending`,
-      icon: HandCoins,
-      tone: 'bg-[#213448]/10 text-[#547792]',
-      to: '/member/loans',
-    },
   ]
 
   return (
@@ -100,7 +91,7 @@ export default function MemberDashboardPage() {
             Welcome back, {formatPersonName(currentUser?.fullName)}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Track your contributions, upcoming payment and assistance activity.
+            Track your contributions and upcoming payments.
           </p>
         </div>
         <Button asChild>
@@ -288,13 +279,6 @@ export default function MemberDashboardPage() {
             items: data.paymentStatuses,
             icon: ReceiptText,
             empty: 'No payment records yet.',
-          },
-          {
-            title: 'Assistance requests',
-            description: 'Your requests by status',
-            items: data.assistanceStatuses,
-            icon: HandCoins,
-            empty: 'No assistance requests yet.',
           },
         ].map(({ title, description, items, icon: Icon, empty }) => (
           <Card

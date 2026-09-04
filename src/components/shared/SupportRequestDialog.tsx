@@ -77,7 +77,6 @@ export default function SupportRequestDialog({
               >
                 <option value="GENERAL_SUPPORT">General system problem</option>
                 <option value="CONTRIBUTION_PENDING">Contribution still pending</option>
-                <option value="ASSISTANCE_PENDING">Assistance payment still pending</option>
                 <option value="ACCOUNT_PROBLEM">Account problem</option>
               </select>
             </div>

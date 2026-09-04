@@ -7,7 +7,6 @@ export interface FundSummary {
 }
 export interface MemberFundSummary {
   totalContributed: string
-  assistanceReceived: string
   netPosition: string
 }
 interface TransactionDto {
@@ -20,7 +19,6 @@ interface TransactionDto {
   status: string
   payment_method?: string
   contribution_id?: string
-  assistance_request_id?: string
   reference?: string
   description?: string
   recorded_by: string
@@ -36,7 +34,6 @@ export interface FundTransaction {
   status: string
   paymentMethod?: string
   contributionId?: string
-  assistanceRequestId?: string
   reference?: string
   description?: string
   recordedBy: string
@@ -67,7 +64,6 @@ const mapTransaction = (value: TransactionDto): FundTransaction => ({
   status: value.status,
   paymentMethod: value.payment_method,
   contributionId: value.contribution_id,
-  assistanceRequestId: value.assistance_request_id,
   reference: value.reference,
   description: value.description,
   recordedBy: value.recorded_by,
@@ -83,12 +79,11 @@ export async function getFundSummary(): Promise<FundSummary> {
 }
 export async function getMemberFundSummary(): Promise<MemberFundSummary> {
   const { data } =
-    await apiClient.get<
-      ApiEnvelope<{ total_contributed: string; assistance_received: string; net_position: string }>
-    >('/fund/summary')
+    await apiClient.get<ApiEnvelope<{ total_contributed: string; net_position: string }>>(
+      '/fund/summary',
+    )
   return {
     totalContributed: data.data.total_contributed,
-    assistanceReceived: data.data.assistance_received,
     netPosition: data.data.net_position,
   }
 }

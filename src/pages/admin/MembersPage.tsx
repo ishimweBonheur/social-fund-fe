@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Download,
   Plus,
@@ -50,13 +50,7 @@ import {
 import { useMembers } from '@/hooks/useMembers'
 import { getApiErrorMessage } from '@/services/api'
 import { formatPersonName } from '@/lib/utils'
-import type {
-  ContributionFrequency,
-  Member,
-  MemberInput,
-  MemberUpdateInput,
-  ReminderFrequency,
-} from '@/types/app'
+import type { ContributionFrequency, Member, MemberInput, MemberUpdateInput } from '@/types/app'
 
 const today = () => new Date().toISOString().slice(0, 10)
 const emptyForm = (): MemberInput => ({
@@ -72,13 +66,25 @@ const emptyForm = (): MemberInput => ({
     lateFeePercentage: '',
     gracePeriodDays: 0,
   },
-  reminder: { enabled: false, frequency: 'DAILY' },
+  preDueReminder: { enabled: true, startDate: '', frequency: 'DAILY' },
+  overdueReminder: { enabled: true, frequency: 'DAILY' },
 })
 const contributionFrequencies: ContributionFrequency[] = ['DAILY', 'WEEKLY', 'MONTHLY', 'CUSTOM']
-const reminderFrequencies: ReminderFrequency[] = ['DAILY', 'WEEKLY', 'CUSTOM']
+
+const firstDueDate = (input: MemberInput['contribution']) => {
+  const start = new Date(`${input.startDate}T00:00:00Z`)
+  if (input.frequency !== 'MONTHLY' || !input.dueDay) return start
+  const lastDay = new Date(
+    Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 0),
+  ).getUTCDate()
+  return new Date(
+    Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), Math.min(input.dueDay, lastDay)),
+  )
+}
 
 export default function MembersPage() {
   const location = useLocation()
+  const navigate = useNavigate()
   const routedMember = (location.state as { member?: Member } | null)?.member
   const [form, setForm] = useState<MemberInput>(emptyForm)
   const [editingId, setEditingId] = useState<string>()
@@ -128,11 +134,7 @@ export default function MembersPage() {
   }
 
   const openCreate = () => {
-    setEditingId(undefined)
-    setForm(emptyForm())
-    setError('')
-    setFieldError('')
-    setShowForm(true)
+    navigate('/admin/members/new')
   }
   const openEdit = async (member: Member) => {
     setError('')
@@ -163,6 +165,25 @@ export default function MembersPage() {
       setFieldError('Contribution amount must be greater than zero.')
       setIsSaving(false)
       return
+    }
+    if (!editingId && form.preDueReminder.enabled) {
+      const reminderStart = new Date(`${form.preDueReminder.startDate}T00:00:00Z`)
+      const dueDate = firstDueDate(form.contribution)
+      const leadDays = (dueDate.getTime() - reminderStart.getTime()) / 86_400_000
+      if (
+        !form.preDueReminder.startDate ||
+        !Number.isInteger(leadDays) ||
+        leadDays < 0 ||
+        leadDays > 365 ||
+        (form.preDueReminder.frequency === 'CUSTOM' &&
+          (!form.preDueReminder.interval || form.preDueReminder.interval < 1))
+      ) {
+        setFieldError(
+          'Choose a reminder start date on or before the first due date and a repeat interval between 1 and 365 days.',
+        )
+        setIsSaving(false)
+        return
+      }
     }
     setFieldError('')
     try {
@@ -212,9 +233,9 @@ export default function MembersPage() {
         title="Members"
         description="Manage members, their contribution plans and account access."
         action={
-          <Button onClick={() => (showForm ? setShowForm(false) : openCreate())}>
-            {!showForm && <Plus className="h-4 w-4" />}
-            {showForm ? 'Cancel' : 'Add member'}
+          <Button onClick={openCreate}>
+            <Plus className="h-4 w-4" />
+            Add member
           </Button>
         }
       />
@@ -309,12 +330,8 @@ export default function MembersPage() {
         <DialogContent className="max-w-3xl">
           <form onSubmit={submit}>
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Edit Member' : 'Add Member'}</DialogTitle>
-              <DialogDescription>
-                {editingId
-                  ? 'Update this member’s account information.'
-                  : 'Create a member with an initial contribution plan and reminder settings.'}
-              </DialogDescription>
+              <DialogTitle>Edit Member</DialogTitle>
+              <DialogDescription>Update this member's account information.</DialogDescription>
             </DialogHeader>
             <div className="grid max-h-[65vh] gap-x-5 gap-y-4 overflow-y-auto px-6 py-5 sm:grid-cols-2">
               <div className="border-b border-border/60 pb-3 sm:col-span-2">
@@ -516,52 +533,56 @@ export default function MembersPage() {
                   <label className="flex items-center gap-2 text-sm">
                     <input
                       type="checkbox"
-                      checked={form.reminder.enabled}
+                      checked={form.preDueReminder.enabled}
                       onChange={(event) =>
                         setForm({
                           ...form,
-                          reminder: { ...form.reminder, enabled: event.target.checked },
+                          preDueReminder: { ...form.preDueReminder, enabled: event.target.checked },
                         })
                       }
                     />
                     Enable reminders
                   </label>
-                  {form.reminder.enabled && (
+                  {form.preDueReminder.enabled && (
                     <div>
-                      <Label htmlFor="reminder-frequency">Reminder Frequency</Label>
-                      <select
-                        id="reminder-frequency"
-                        className="mt-1 h-10 w-full rounded-xl border bg-card px-3 text-sm"
-                        value={form.reminder.frequency}
+                      <Label htmlFor="reminder-start-date">Reminder Start Date</Label>
+                      <Input
+                        id="reminder-start-date"
+                        required
+                        type="date"
+                        value={form.preDueReminder.startDate}
                         onChange={(event) =>
                           setForm({
                             ...form,
-                            reminder: {
-                              ...form.reminder,
-                              frequency: event.target.value as ReminderFrequency,
+                            preDueReminder: {
+                              ...form.preDueReminder,
+                              startDate: event.target.value,
                             },
                           })
                         }
-                      >
-                        {reminderFrequencies.map((value) => (
-                          <option key={value}>{value}</option>
-                        ))}
-                      </select>
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Select the exact date when reminder emails should begin.
+                      </p>
                     </div>
                   )}
-                  {form.reminder.enabled && form.reminder.frequency === 'CUSTOM' && (
+                  {form.preDueReminder.enabled && (
                     <div>
-                      <Label htmlFor="reminder-interval">Reminder Interval (days)</Label>
+                      <Label htmlFor="reminder-repeat-days">Repeat Every (days)</Label>
                       <Input
-                        id="reminder-interval"
+                        id="reminder-repeat-days"
                         required
                         min="1"
+                        max="365"
                         type="number"
-                        value={form.reminder.interval ?? ''}
+                        value={form.preDueReminder.interval ?? 1}
                         onChange={(event) =>
                           setForm({
                             ...form,
-                            reminder: { ...form.reminder, interval: Number(event.target.value) },
+                            preDueReminder: {
+                              ...form.preDueReminder,
+                              interval: Number(event.target.value),
+                            },
                           })
                         }
                       />
@@ -580,15 +601,7 @@ export default function MembersPage() {
               >
                 Cancel
               </Button>
-              <Button disabled={isSaving}>
-                {isSaving
-                  ? editingId
-                    ? 'Updating…'
-                    : 'Creating…'
-                  : editingId
-                    ? 'Update Member'
-                    : 'Create Member and Plan'}
-              </Button>
+              <Button disabled={isSaving}>{isSaving ? 'Updating...' : 'Update Member'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

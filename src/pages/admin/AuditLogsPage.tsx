@@ -156,9 +156,6 @@ export default function AuditLogsPage() {
                       'PROOF_UPLOADED',
                       'CONTRIBUTION_APPROVED',
                       'CONTRIBUTION_REJECTED',
-                      'ASSISTANCE_REQUEST_CREATED',
-                      'ASSISTANCE_APPROVED',
-                      'ASSISTANCE_PAID',
                     ].map((value) => (
                       <SelectItem
                         key={value}
@@ -184,16 +181,14 @@ export default function AuditLogsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">All entities</SelectItem>
-                    {['USER', 'CONTRIBUTION', 'CONTRIBUTION_PLAN', 'ASSISTANCE_REQUEST'].map(
-                      (value) => (
-                        <SelectItem
-                          key={value}
-                          value={value}
-                        >
-                          {humanizeValue(value)}
-                        </SelectItem>
-                      ),
-                    )}
+                    {['USER', 'CONTRIBUTION', 'CONTRIBUTION_PLAN'].map((value) => (
+                      <SelectItem
+                        key={value}
+                        value={value}
+                      >
+                        {humanizeValue(value)}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

@@ -231,7 +231,6 @@ function buildAdminReport(data: AdminDashboardData, options: AdminReportOptions 
       ${metricCard('Collected this period', money(s.collectedMonth), `${rate}% of target`, 'brand')}
       ${metricCard('Expected this period', money(s.expectedMonth), `${s.pendingContributions} contribution(s) awaiting review`, 'soft')}
       ${metricCard('Active members', s.membersActive.toLocaleString(), `${s.membersTotal} total · ${s.membersSuspended} suspended`, 'brand')}
-      ${metricCard('Assistance approved', s.assistanceApproved.toLocaleString(), `${s.assistancePending} awaiting review`, 'soft')}
       ${metricCard('Outstanding', money(s.outstanding), `${s.overdueMembers} member(s) overdue`, 'ink')}
     </div>`
 
@@ -370,10 +369,6 @@ function buildAdminReport(data: AdminDashboardData, options: AdminReportOptions 
       <div class="status-card">
         <h3>Members</h3>
         ${statusDots(data.memberStatuses, 'No member status data.')}
-      </div>
-      <div class="status-card">
-        <h3>Assistance requests</h3>
-        ${statusDots(data.assistanceStatuses, 'No assistance requests.')}
       </div>
       <div class="status-card">
         <h3>Overdue brackets</h3>

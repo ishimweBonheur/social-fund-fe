@@ -46,7 +46,7 @@ import {
 import type { ContributionFrequency, ReminderFrequency } from '@/types/app'
 
 const frequencies: ContributionFrequency[] = ['DAILY', 'WEEKLY', 'MONTHLY', 'CUSTOM']
-const reminderFrequencies: ReminderFrequency[] = ['DAILY', 'WEEKLY', 'CUSTOM']
+const reminderFrequencies: ReminderFrequency[] = ['DAILY', 'WEEKLY', 'MONTHLY', 'CUSTOM']
 const inputFrom = (plan: ContributionPlan): ContributionPlanInput => ({
   amount: plan.amount,
   frequency: plan.frequency,
@@ -55,6 +55,10 @@ const inputFrom = (plan: ContributionPlan): ContributionPlanInput => ({
   reminderEnabled: plan.reminderEnabled,
   reminderFrequency: plan.reminderFrequency ?? 'DAILY',
   reminderInterval: plan.reminderInterval,
+  preDueReminderEnabled: plan.preDueReminderEnabled,
+  preDueReminderFrequency: plan.preDueReminderFrequency ?? 'DAILY',
+  preDueReminderInterval: plan.preDueReminderInterval,
+  preDueReminderDaysBeforeDue: plan.preDueReminderDaysBeforeDue,
   lateFeeEnabled: plan.lateFeeEnabled,
   lateFeePercentage: plan.lateFeePercentage,
   gracePeriodDays: plan.gracePeriodDays,
@@ -424,7 +428,13 @@ export default function ContributionPlansPage() {
                 {
                   label: 'Reminder',
                   value: selected.reminderEnabled
-                    ? (selected.reminderFrequency ?? 'Enabled')
+                    ? `Overdue: ${selected.reminderFrequency ?? 'Enabled'}`
+                    : 'Disabled',
+                },
+                {
+                  label: 'Before-due reminder',
+                  value: selected.preDueReminderEnabled
+                    ? `${selected.preDueReminderDaysBeforeDue} day(s) before · ${selected.preDueReminderFrequency}`
                     : 'Disabled',
                 },
                 {
@@ -527,11 +537,76 @@ export default function ContributionPlansPage() {
                       setForm({ ...form, reminderEnabled: event.target.checked })
                     }
                   />
-                  Reminders enabled
+                  Overdue reminders enabled
                 </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.preDueReminderEnabled}
+                    onChange={(event) =>
+                      setForm({ ...form, preDueReminderEnabled: event.target.checked })
+                    }
+                  />
+                  Before-due reminders enabled
+                </label>
+                {form.preDueReminderEnabled && (
+                  <div>
+                    <Label htmlFor="edit-reminder-days-before">Start Before Due (days)</Label>
+                    <Input
+                      id="edit-reminder-days-before"
+                      type="number"
+                      min="0"
+                      max="365"
+                      required
+                      value={form.preDueReminderDaysBeforeDue}
+                      onChange={(event) =>
+                        setForm({
+                          ...form,
+                          preDueReminderDaysBeforeDue: Number(event.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                )}
+                {form.preDueReminderEnabled && (
+                  <div>
+                    <Label htmlFor="edit-pre-reminder-frequency">Before-due Frequency</Label>
+                    <select
+                      id="edit-pre-reminder-frequency"
+                      className="mt-1 h-10 w-full rounded-xl border bg-card px-3 text-sm"
+                      value={form.preDueReminderFrequency}
+                      onChange={(event) =>
+                        setForm({
+                          ...form,
+                          preDueReminderFrequency: event.target.value as ReminderFrequency,
+                        })
+                      }
+                    >
+                      {reminderFrequencies.map((value) => (
+                        <option key={value}>{value}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {form.preDueReminderEnabled && form.preDueReminderFrequency === 'CUSTOM' && (
+                  <div>
+                    <Label htmlFor="edit-pre-reminder-interval">Repeat Every (days)</Label>
+                    <Input
+                      id="edit-pre-reminder-interval"
+                      type="number"
+                      min="1"
+                      max="365"
+                      required
+                      value={form.preDueReminderInterval ?? ''}
+                      onChange={(event) =>
+                        setForm({ ...form, preDueReminderInterval: Number(event.target.value) })
+                      }
+                    />
+                  </div>
+                )}
                 {form.reminderEnabled && (
                   <div>
-                    <Label htmlFor="edit-reminder-frequency">Reminder Frequency</Label>
+                    <Label htmlFor="edit-reminder-frequency">Overdue Frequency</Label>
                     <select
                       id="edit-reminder-frequency"
                       className="mt-1 h-10 w-full rounded-xl border bg-card px-3 text-sm"
@@ -547,6 +622,22 @@ export default function ContributionPlansPage() {
                         <option key={value}>{value}</option>
                       ))}
                     </select>
+                  </div>
+                )}
+                {form.reminderEnabled && form.reminderFrequency === 'CUSTOM' && (
+                  <div>
+                    <Label htmlFor="edit-reminder-interval">Repeat Every (days)</Label>
+                    <Input
+                      id="edit-reminder-interval"
+                      type="number"
+                      min="1"
+                      max="365"
+                      required
+                      value={form.reminderInterval ?? ''}
+                      onChange={(event) =>
+                        setForm({ ...form, reminderInterval: Number(event.target.value) })
+                      }
+                    />
                   </div>
                 )}
                 <label className="flex items-center gap-2 text-sm">
@@ -573,7 +664,9 @@ export default function ContributionPlansPage() {
                     />
                   </div>
                 )}
-                {fieldError && <p className="text-xs text-destructive sm:col-span-2">{fieldError}</p>}
+                {fieldError && (
+                  <p className="text-xs text-destructive sm:col-span-2">{fieldError}</p>
+                )}
               </div>
             )}
             <DialogFooter>

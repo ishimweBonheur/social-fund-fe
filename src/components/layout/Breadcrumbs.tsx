@@ -13,20 +13,34 @@ export function Breadcrumbs() {
   const current = [...items]
     .sort((a, b) => b.to.length - a.to.length)
     .find((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))
-  const nestedLabel = pathname.includes('/review') ? 'Review contribution' : undefined
+  const nestedLabel = pathname.endsWith('/members/new')
+    ? 'Register member'
+    : pathname.includes('/review')
+      ? 'Review contribution'
+      : undefined
   const onDashboard = current?.to === dashboard.to && !nestedLabel
 
   return (
-    <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-      <Link to={dashboard.to} className="flex items-center gap-1.5 transition-colors hover:text-foreground">
-        
+    <nav
+      aria-label="Breadcrumb"
+      className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground"
+    >
+      <Link
+        to={dashboard.to}
+        className="flex items-center gap-1.5 transition-colors hover:text-foreground"
+      >
         {dashboard.label}
       </Link>
       {!onDashboard && current && (
         <>
           <ChevronRight className="h-3.5 w-3.5 opacity-60" />
           {nestedLabel ? (
-            <Link to={current.to} className="transition-colors hover:text-foreground">{current.label}</Link>
+            <Link
+              to={current.to}
+              className="transition-colors hover:text-foreground"
+            >
+              {current.label}
+            </Link>
           ) : (
             <span className="font-medium text-foreground">{current.label}</span>
           )}

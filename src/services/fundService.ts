@@ -29,14 +29,11 @@ export interface AdminDashboardData {
     fundInflow: number
     fundOutflow: number
     fundBalance: number
-    assistancePending: number
-    assistanceApproved: number
     notificationsFailed: number
   }
   contributionPerformance: Array<{ month: string; expected: number; collected: number }>
   fundMovement: Array<{ month: string; inflow: number; outflow: number }>
   memberStatuses: Array<{ name: string; count: number }>
-  assistanceStatuses: Array<{ name: string; count: number }>
   overdueBuckets: Array<{ name: string; count: number }>
   contributionByFrequency: Array<{
     frequency: string
@@ -59,7 +56,6 @@ export interface MemberDashboardData {
     contributionRate: number
     pendingCount: number
     overdueCount: number
-    assistanceReceived: number
   }
   nextDueDate?: string
   nextExpectedAmount?: number
@@ -71,7 +67,6 @@ export interface MemberDashboardData {
   effectiveOverdueDate?: string
   contributionHistory: Array<{ month: string; expected: number; paid: number }>
   paymentStatuses: Array<{ name: string; count: number }>
-  assistanceStatuses: Array<{ name: string; count: number }>
   recentContributions: Array<{ dueDate: string; expected: number; paid: number; status: string }>
   contributionByFrequency: Array<{
     frequency: string
@@ -246,8 +241,6 @@ export async function getAdminDashboard(
       fundInflow: number(summary.fund_inflow),
       fundOutflow: number(summary.fund_outflow),
       fundBalance: number(summary.fund_balance),
-      assistancePending: number(summary.assistance_pending),
-      assistanceApproved: number(summary.assistance_approved),
       notificationsFailed: number(summary.notifications_failed),
     },
     contributionPerformance: arrayData(
@@ -264,7 +257,6 @@ export async function getAdminDashboard(
       outflow: number(item.outflow),
     })),
     memberStatuses: counts(value.member_statuses),
-    assistanceStatuses: counts(value.assistance_statuses),
     overdueBuckets: counts(value.overdue_buckets),
     contributionByFrequency: frequencies(value.contribution_by_frequency),
   }
@@ -283,7 +275,6 @@ export async function getMemberDashboard(): Promise<MemberDashboardData> {
       contributionRate: number(summary.contribution_rate),
       pendingCount: number(summary.pending_count),
       overdueCount: number(summary.overdue_count),
-      assistanceReceived: number(summary.assistance_received),
     },
     nextDueDate: summary.next_due_date ? text(summary.next_due_date) : undefined,
     nextExpectedAmount:
@@ -306,7 +297,6 @@ export async function getMemberDashboard(): Promise<MemberDashboardData> {
             paid: item.paid,
           })),
     paymentStatuses: counts(value.payment_statuses),
-    assistanceStatuses: counts(value.assistance_statuses),
     recentContributions: arrayData(value.recent_contributions, 'items').map((item) => ({
       dueDate: text(item.due_date),
       expected: number(item.expected),

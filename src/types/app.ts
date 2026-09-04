@@ -20,7 +20,7 @@ export interface GoogleAuthResponse {
 }
 export type MemberStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
 export type ContributionFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM'
-export type ReminderFrequency = 'DAILY' | 'WEEKLY' | 'CUSTOM'
+export type ReminderFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM'
 export interface Member {
   id: string
   fullName: string
@@ -45,6 +45,7 @@ export interface ContributionInput {
 }
 export interface ReminderInput {
   enabled: boolean
+  startDate?: string
   frequency: ReminderFrequency
   interval?: number
 }
@@ -53,7 +54,8 @@ export interface MemberInput {
   email: string
   phone: string
   contribution: ContributionInput
-  reminder: ReminderInput
+  preDueReminder: ReminderInput
+  overdueReminder: ReminderInput
 }
 export interface MemberUpdateInput {
   fullName: string

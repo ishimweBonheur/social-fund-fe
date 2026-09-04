@@ -13,6 +13,10 @@ interface PlanDto {
   ReminderEnabled: boolean
   ReminderFrequency?: ReminderFrequency
   ReminderInterval?: number
+  PreDueReminderEnabled: boolean
+  PreDueReminderFrequency?: ReminderFrequency
+  PreDueReminderInterval?: number
+  PreDueReminderDaysBeforeDue: number
   LateFeeEnabled: boolean
   LateFeePercentage?: string
   GracePeriodDays: number
@@ -33,6 +37,10 @@ export interface ContributionPlan {
   reminderEnabled: boolean
   reminderFrequency?: ReminderFrequency
   reminderInterval?: number
+  preDueReminderEnabled: boolean
+  preDueReminderFrequency?: ReminderFrequency
+  preDueReminderInterval?: number
+  preDueReminderDaysBeforeDue: number
   lateFeeEnabled: boolean
   lateFeePercentage?: string
   gracePeriodDays: number
@@ -55,6 +63,10 @@ const map = (dto: PlanDto, memberName: string): ContributionPlan => ({
   reminderEnabled: dto.ReminderEnabled,
   reminderFrequency: dto.ReminderFrequency,
   reminderInterval: dto.ReminderInterval,
+  preDueReminderEnabled: dto.PreDueReminderEnabled,
+  preDueReminderFrequency: dto.PreDueReminderFrequency,
+  preDueReminderInterval: dto.PreDueReminderInterval,
+  preDueReminderDaysBeforeDue: dto.PreDueReminderDaysBeforeDue,
   lateFeeEnabled: dto.LateFeeEnabled,
   lateFeePercentage: dto.LateFeePercentage,
   gracePeriodDays: dto.GracePeriodDays,
@@ -120,6 +132,13 @@ export async function updateContributionPlan(plan: ContributionPlan, input: Cont
     ReminderFrequency: input.reminderEnabled ? input.reminderFrequency : null,
     ReminderInterval:
       input.reminderEnabled && input.reminderFrequency === 'CUSTOM' ? input.reminderInterval : null,
+    PreDueReminderEnabled: input.preDueReminderEnabled,
+    PreDueReminderFrequency: input.preDueReminderEnabled ? input.preDueReminderFrequency : null,
+    PreDueReminderInterval:
+      input.preDueReminderEnabled && input.preDueReminderFrequency === 'CUSTOM'
+        ? input.preDueReminderInterval
+        : null,
+    PreDueReminderDaysBeforeDue: input.preDueReminderDaysBeforeDue,
     LateFeeEnabled: input.lateFeeEnabled,
     LateFeePercentage: input.lateFeeEnabled ? input.lateFeePercentage : null,
     GracePeriodDays: input.gracePeriodDays,

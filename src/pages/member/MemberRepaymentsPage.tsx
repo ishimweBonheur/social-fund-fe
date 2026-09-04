@@ -52,7 +52,7 @@ export default function MemberRepaymentsPage() {
     <div>
       <PageHeader
         title="My Transaction History"
-        description="Track completed contributions and assistance received"
+        description="Track your completed contributions"
         action={
           <Button
             className="gap-2 shadow-sm"
@@ -63,10 +63,9 @@ export default function MemberRepaymentsPage() {
           </Button>
         }
       />
-      <div className="mb-3 grid gap-3 sm:grid-cols-3">
+      <div className="mb-3 grid gap-3 sm:grid-cols-2">
         {[
           ['Total Contributed', summary.data?.totalContributed],
-          ['Assistance Received', summary.data?.assistanceReceived],
           ['Net Position', summary.data?.netPosition],
         ].map(([label, value]) => (
           <Card key={label}>
@@ -97,7 +96,6 @@ export default function MemberRepaymentsPage() {
               <SelectContent>
                 <SelectItem value="ALL">All transaction types</SelectItem>
                 <SelectItem value="CONTRIBUTION">Contributions</SelectItem>
-                <SelectItem value="ASSISTANCE">Assistance received</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -144,7 +142,7 @@ export default function MemberRepaymentsPage() {
       ) : items.length === 0 ? (
         <EmptyState
           title="No completed transactions"
-          description="Approved contributions and paid assistance will appear here."
+          description="Approved contributions will appear here."
         />
       ) : (
         <Card>
@@ -165,9 +163,7 @@ export default function MemberRepaymentsPage() {
                 {items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{new Date(item.createdAt).toLocaleString()}</TableCell>
-                    <TableCell>
-                      {item.type === 'ASSISTANCE' ? 'Assistance received' : 'Contribution paid'}
-                    </TableCell>
+                    <TableCell>Contribution paid</TableCell>
                     <TableCell>{money(item.amount)}</TableCell>
                     <TableCell>
                       {item.paymentMethod ? humanizeValue(item.paymentMethod) : '—'}

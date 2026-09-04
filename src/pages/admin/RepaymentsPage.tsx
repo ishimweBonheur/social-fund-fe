@@ -123,7 +123,6 @@ export default function RepaymentsPage() {
               <SelectContent>
                 <SelectItem value="ALL">All types</SelectItem>
                 <SelectItem value="CONTRIBUTION">Contribution</SelectItem>
-                <SelectItem value="ASSISTANCE">Assistance</SelectItem>
                 <SelectItem value="ADJUSTMENT">Adjustment</SelectItem>
                 <SelectItem value="REFUND">Refund</SelectItem>
               </SelectContent>

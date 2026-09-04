@@ -61,11 +61,24 @@ const createPayload = (input: MemberInput) => ({
     }),
     grace_period_days: input.contribution.gracePeriodDays,
   },
-  reminder: {
-    enabled: input.reminder.enabled,
-    frequency: input.reminder.frequency,
-    ...(input.reminder.enabled &&
-      input.reminder.frequency === 'CUSTOM' && { interval: input.reminder.interval }),
+  pre_due_reminder: {
+    enabled: input.preDueReminder.enabled,
+    ...(input.preDueReminder.enabled && {
+      start_date: input.preDueReminder.startDate,
+      frequency: input.preDueReminder.frequency,
+      ...(input.preDueReminder.frequency === 'CUSTOM' && {
+        interval: input.preDueReminder.interval,
+      }),
+    }),
+  },
+  overdue_reminder: {
+    enabled: input.overdueReminder.enabled,
+    ...(input.overdueReminder.enabled && {
+      frequency: input.overdueReminder.frequency,
+      ...(input.overdueReminder.frequency === 'CUSTOM' && {
+        interval: input.overdueReminder.interval,
+      }),
+    }),
   },
 })
 

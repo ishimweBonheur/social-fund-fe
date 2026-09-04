@@ -17,7 +17,6 @@ import {
   CircleDollarSign,
   Clock3,
   Download,
-  HandCoins,
   UsersRound,
   Wallet,
 } from 'lucide-react'
@@ -110,15 +109,6 @@ export default function AdminDashboardPage() {
         : 'No members',
       to: '/admin/members',
       tone: 'bg-[#547792]/15 text-[#547792]',
-    },
-    {
-      label: 'Assistance approved',
-      value: s.assistanceApproved.toLocaleString(),
-      note: `${s.assistancePending} awaiting review`,
-      icon: HandCoins,
-      context: `${s.assistancePending} pending`,
-      to: '/admin/loans',
-      tone: 'bg-[#213448]/10 text-[#213448] dark:text-[#94B4C1]',
     },
   ]
 
