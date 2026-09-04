@@ -15,6 +15,7 @@ import NewMemberPage from '@/pages/admin/NewMemberPage'
 import NotificationsPage from '@/pages/admin/NotificationsPage'
 import RepaymentsPage from '@/pages/admin/RepaymentsPage'
 import SettingsPage from '@/pages/admin/SettingsPage'
+import PaymentSettingsPage from '@/pages/admin/PaymentSettingsPage'
 import LoginPage from '@/pages/LoginPage'
 import MemberContributionsPage from '@/pages/member/MemberContributionsPage'
 import MemberDashboardPage from '@/pages/member/MemberDashboardPage'
@@ -115,6 +116,10 @@ function AppRoutes() {
           <Route
             path="/admin/settings"
             element={<SettingsPage />}
+          />
+          <Route
+            path="/admin/settings/payment-method"
+            element={<PaymentSettingsPage />}
           />
         </Route>
 

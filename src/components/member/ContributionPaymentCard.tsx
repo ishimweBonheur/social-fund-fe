@@ -2,11 +2,15 @@ import { Phone } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-
-const ussdCode = '*182*1*1*0784963589#'
-const dialUrl = 'tel:*182*1*1*0784963589%23'
+import { useRemoteData } from '@/hooks/useRemoteData'
+import { getPaymentSettings } from '@/services/paymentSettingsService'
 
 export default function ContributionPaymentCard() {
+  const remote = useRemoteData(useCallback(() => getPaymentSettings(), []))
+  const settings = remote.data
+  const ussdCode = settings?.ussdCode ?? ''
+  const dialUrl = `tel:${ussdCode.replaceAll('#', '%23')}`
+  if (!settings) return null
   return (
     <Card className="mb-3">
       <CardContent className="flex flex-col items-center gap-4 p-4 sm:flex-row sm:items-center">
@@ -20,6 +24,10 @@ export default function ContributionPaymentCard() {
         </div>
         <div className="min-w-0 flex-1 text-center sm:text-left">
           <p className="text-sm font-semibold">Pay your contribution</p>
+          <p className="mt-1 text-xs font-medium">Account: {settings.accountName}</p>
+          {settings.paymentType === 'MERCHANT' && settings.merchantCode && (
+            <p className="text-xs text-muted-foreground">Merchant code: {settings.merchantCode}</p>
+          )}
           <p className="mt-1 text-xs text-muted-foreground">
             Scan the QR code with your phone to open the dialer, or use the button below on this
             device.
@@ -41,3 +49,4 @@ export default function ContributionPaymentCard() {
     </Card>
   )
 }
+import { useCallback } from 'react'

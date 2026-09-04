@@ -78,6 +78,17 @@ export default function MemberDashboardPage() {
       tone: 'bg-[#94B4C1]/25 text-[#547792]',
       to: '/member/contributions',
     },
+    {
+      label: 'Next payment',
+      value:
+        data.nextExpectedAmount === undefined
+          ? 'Not scheduled'
+          : formatCurrency(data.nextExpectedAmount),
+      note: data.nextDueDate ? `Due ${displayDate(data.nextDueDate)}` : 'No upcoming due date',
+      icon: CalendarClock,
+      tone: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+      to: '/member/contributions',
+    },
   ]
 
   return (

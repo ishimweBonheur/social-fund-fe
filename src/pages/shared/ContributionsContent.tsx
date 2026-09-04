@@ -42,6 +42,7 @@ import {
 import { useRemoteData } from '@/hooks/useRemoteData'
 import { formatPersonName } from '@/lib/utils'
 import { getApiErrorMessage } from '@/services/api'
+import { getPaymentSettings } from '@/services/paymentSettingsService'
 import {
   getActiveContributionPlan,
   updateContributionPlan,
@@ -145,6 +146,8 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
     [admin, search, appliedFilters, page],
   )
   const remote = useRemoteData(loader)
+  const paymentSettings = useRemoteData(useCallback(() => getPaymentSettings(), []))
+  const reloadPaymentSettings = paymentSettings.reload
   const [selected, setSelected] = useState<Contribution>()
   const [approveTarget, setApproveTarget] = useState<Contribution>()
   const [rejectTarget, setRejectTarget] = useState<Contribution>()
@@ -228,16 +231,20 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
     })
     setPage(1)
   }
-  const openPayment = useCallback((item: Contribution) => {
-    setFormError('')
-    setPayment({
-      amount: item.totalDue,
-      paymentMethod: 'MOBILE_MONEY',
-      transactionReference: '',
-      proof: undefined,
-    })
-    setPaymentTarget(item)
-  }, [])
+  const openPayment = useCallback(
+    (item: Contribution) => {
+      reloadPaymentSettings()
+      setFormError('')
+      setPayment({
+        amount: item.totalDue,
+        paymentMethod: 'MOBILE_MONEY',
+        transactionReference: '',
+        proof: undefined,
+      })
+      setPaymentTarget(item)
+    },
+    [reloadPaymentSettings],
+  )
   useEffect(() => {
     if (admin || !items.length) return
     const paymentID = searchParams.get('pay')
@@ -989,7 +996,8 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
       <Dialog
         open={Boolean(paymentTarget)}
         onOpenChange={(open) => {
-          if (!open) setPaymentTarget(undefined)
+          if (open) void paymentSettings.reload()
+          else setPaymentTarget(undefined)
         }}
       >
         <DialogContent>
@@ -1004,7 +1012,15 @@ export default function ContributionsContent({ admin = false }: { admin?: boolea
             <div className="grid gap-4 px-6 py-5">
               <div className="rounded-xl bg-muted p-3 text-center text-sm">
                 <span className="text-muted-foreground">Payment code: </span>
-                <strong>*182*1*1*0784963589#</strong>
+                <strong>{paymentSettings.data?.ussdCode ?? 'Loading…'}</strong>
+                {paymentSettings.data?.accountName && (
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    Account: {paymentSettings.data.accountName}
+                    {paymentSettings.data.merchantCode
+                      ? ` · Merchant code: ${paymentSettings.data.merchantCode}`
+                      : ''}
+                  </span>
+                )}
               </div>
               <div>
                 <Label htmlFor="payment-amount">Amount *</Label>

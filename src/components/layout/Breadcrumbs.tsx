@@ -15,9 +15,11 @@ export function Breadcrumbs() {
     .find((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))
   const nestedLabel = pathname.endsWith('/members/new')
     ? 'Register member'
-    : pathname.includes('/review')
-      ? 'Review contribution'
-      : undefined
+    : pathname.endsWith('/settings/payment-method')
+      ? 'Payment method'
+      : pathname.includes('/review')
+        ? 'Review contribution'
+        : undefined
   const onDashboard = current?.to === dashboard.to && !nestedLabel
 
   return (

@@ -33,7 +33,7 @@ export default function EmailNotificationsPage() {
     }
   }
   return (
-    <div>
+    <div className="w-full space-y-5">
       <PageHeader
         title="Email Notifications"
         description="Track queued, sent, and failed emails"

@@ -110,6 +110,18 @@ export default function AdminDashboardPage() {
       to: '/admin/members',
       tone: 'bg-[#547792]/15 text-[#547792]',
     },
+    {
+      label: 'Overdue members',
+      value: s.overdueMembers.toLocaleString(),
+      note: `${s.pendingContributions} contribution${s.pendingContributions === 1 ? '' : 's'} awaiting review`,
+      icon: Clock3,
+      context: s.overdueMembers > 0 ? 'Needs attention' : 'All up to date',
+      to: '/admin/contributions',
+      tone:
+        s.overdueMembers > 0
+          ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300'
+          : 'bg-primary/10 text-primary',
+    },
   ]
 
   return (
