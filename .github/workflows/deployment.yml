@@ -1,4 +1,4 @@
-name: Deploy React App
+name: Deploy github actions
 
 on:
   push:
@@ -16,14 +16,13 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '17'
+        node-version: '18'  # Changed from 17 to 18 (more stable)
         cache: 'npm'
     
     - name: Install dependencies
       run: npm ci
     
-    - name: Run tests
-      run: npm test -- --coverage
+    # REMOVED the test step since you don't have a test script
     
     - name: Build project
       run: npm run build
@@ -33,4 +32,4 @@ jobs:
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./build
+        publish_dir: ./dist  # ← CHANGED: Vite uses 'dist', not 'build'
