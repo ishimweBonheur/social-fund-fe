@@ -22,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: npm ci
     
-    # REMOVED the test step since you don't have a test script
+      
     
     - name: Build project
       run: npm run build
