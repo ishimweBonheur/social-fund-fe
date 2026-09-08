@@ -14,6 +14,7 @@ import {
   ArrowDownRight,
   ArrowRight,
   CheckCircle2,
+  ClipboardCheck,
   CircleDollarSign,
   Clock3,
   Download,
@@ -156,6 +157,42 @@ export default function AdminDashboardPage() {
           </Button>
         </div>
       </section>
+
+      {s.pendingContributions > 0 && (
+        <section
+          aria-label="Pending contribution review"
+          className="overflow-hidden rounded-2xl border border-amber-600/30 bg-amber-50 text-amber-950 shadow-[0_10px_30px_-20px_rgba(146,64,14,.7)] dark:border-amber-400/45 dark:bg-amber-950 dark:text-amber-50"
+        >
+          <button
+            type="button"
+            onClick={() => navigate('/admin/contributions')}
+            className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-amber-600/35 dark:hover:bg-amber-900 sm:px-5"
+          >
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-amber-600 text-white dark:bg-amber-400 dark:text-amber-950">
+              <ClipboardCheck
+                className="size-5"
+                aria-hidden="true"
+              />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-extrabold sm:text-base">
+                {s.pendingContributions} contribution{s.pendingContributions === 1 ? '' : 's'}{' '}
+                awaiting review
+              </span>
+              <span className="mt-0.5 block text-xs font-medium text-amber-900/80 dark:text-amber-100/85 sm:text-sm">
+                Review the submitted payment proof and approve or reject each contribution.
+              </span>
+            </span>
+            <span className="flex shrink-0 items-center gap-1 text-sm font-bold">
+              Review{' '}
+              <ArrowRight
+                className="size-4"
+                aria-hidden="true"
+              />
+            </span>
+          </button>
+        </section>
+      )}
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map(({ label, value, note, icon: Icon, context, tone, to }) => (
